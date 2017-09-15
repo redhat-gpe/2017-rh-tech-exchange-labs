@@ -4,7 +4,7 @@
 :linkattrs:
 
 
-== Introduction to ALab
+== Introduction to Lab
 
 :numbered:
 
