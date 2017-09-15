@@ -1,0 +1,69 @@
+---
+- name: Lab Updater
+  hosts: all
+  vars:
+    # Add hosts to satellite
+    add_to_satellite: true
+    # !!!Treat this information like a password, do not share outside of GPTE!!!
+    # Satellite URL, activation key, and org ID
+    satellite_url: "http://sat.example.com"
+    satellite_activation_key: "rhel7"
+    satellite_org_id: "Default_Organization"
+    # Remove from Satellite after updating hosts
+    remove_from_satellite: true
+    # Fully update hosts
+    # NOTE: if not using add_to_satellite we assume you handle subscription on your own.
+    update_hosts: true
+  tasks:
+  - block:
+      - name: Check if OPEN Repo file exists
+        stat: path=/etc/yum.repos.d/open.repo
+        register: openrepo
+      - name: Disable OPEN Repo file
+        command: mv /etc/yum.repos.d/open.repo /etc/yum.repos.d/open.repo.disabled
+        when: openrepo.stat.exists
+
+  - block:
+      - name: Unregister hosts from subscription-manager
+        redhat_subscription:
+          state: absent
+      - name: Remove any existing satellite CA certs
+        yum:
+          name: "katello-ca-consumer-*"
+          state: absent
+      - name: Install Satellite CA certificate
+        yum:
+          name: "{{ satellite_url }}/pub/katello-ca-consumer-latest.noarch.rpm"
+          state: present
+      - name: Register hosts with Satellite
+        redhat_subscription:
+          state: present
+          activationkey: "{{ satellite_activation_key }}"
+          org_id: "{{ satellite_org_id }}"
+      - name: Enable necessary repositories
+        command: "subscription-manager repos --enable rhel-7-server-rpms"
+    when: add_to_satellite == true
+  - block:
+      #- name: Clean out yum metadata
+      #  command: "yum clean all"
+      - name: Yum update all packages
+        yum: name=* state=latest update_cache=yes
+    when: update_hosts == true
+  - block:
+      - name: Unregister hosts from satellite
+        redhat_subscription:
+          state: absent
+        when: remove_from_satellite == true
+      - name: Remove Satellite CA certificate
+        yum:
+          name: "katello-ca-consumer-*"
+          state: absent
+        when: remove_from_satellite == true
+    when: add_to_satellite == true
+  #- block:
+  #    - name: Check if OPEN Repo is disabled
+  #      stat: path=/etc/yum.repos.d/open.repo.disabled
+  #      register: openrepo2
+  #    - name: Enable OPEN Repo file
+  #      command: mv /etc/yum.repos.d/open.repo.disabled /etc/yum.repos.d/open.repo
+  #      when: openrepo2.stat.exists
