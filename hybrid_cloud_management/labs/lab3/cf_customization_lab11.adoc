@@ -1,0 +1,904 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+
+== Ansible Automation Lab
+
+:numbered:
+
+
+== Set Up Lab
+
+=== Clean Up Lab Environment
+
+. Verify your provider authentication status as described earlier in this course in the module 1 lab.
++
+[WARNING]
+You must verify provider authentication status every time you start your environment. If your providers are not properly authenticated, some of the labs will hang and you will have to start over.
+
+. Delete the VMs in your environment from the other exercises to avoid issues with Ansible Tower license's VM limit.
+* Your Ansible Tower license allows for only 10 managed VMs, and you do not need these moving forward.
+
+=== Create Customization Template
+
+The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. In this section, you set up a working template.
+
+. Navigate to *Compute -> Infrastructure -> PXE*.
+
+. Select the *Customization Templates* accordion.
+
+. Navigate to *All Customization Templates -> System Image Types*.
+
+. Select *Configuration -> Add a New Customization Template*.
+.. Set *Name* to `Red Hat Cloud Image Template`.
+.. Set *Image Type* to `RHEL-6`.
+* Ignore the version number.
+.. Set *Type* to `CloudInit`.
+.. Copy the text from link:https://www.opentlc.com/download/cf_customization_4.5/custom-provision.txt["custom-provision.txt^"].
+.. In the *Script* text box, paste the script you copied from `custom-provision.txt` in the previous step.
+.. Click *Add*.
+
+=== Fix Missing Ansible Tower Job Launcher
+
+In CloudForms 4.5 GA there is a deprecated `ConfigurationManagement` namespace that was replaced with `AutomationManagement`.
+
+The way to launch Ansible Tower jobs is to point to `/System/Request/ansible_tower_job`, which still calls `ConfigurationManagement`. The new namespace has all of the required code, but it is not wired up as of CloudForms 4.5 GA. In this section, you wire up the new namespace in the job launcher.
+
+. Navigate to *Automation -> Automate -> Explorer*.
+
+. Create a new domain called `AnsibleTowerLab` and make sure that it is enabled.
+
+. Copy `/ManageIQ/System/Request/ansible_tower_job` to the `AnsibleTowerLab` domain and keep the same path.
+
+. Edit the instance you just copied.
+
+. In *(rel4)*, change the text `ConfigurationManagement` to `AutomationManagement` and click *Save*.
+
+=== Fix CloudForms Inventory Script
+
+As of CloudForms 4.5 GA, the out-of-the-box inventory script returns the first IP address that CloudForms is aware of. Sometimes, however, this IP address is an `ipv6` IP address, and Ansible Tower currently does not work well with `ipv6`. A modified CloudForms inventory script is available that ignores `ipv6` addresses when inventory is generated.
+
+. From the workstation, as the `root` user, use SSH to access the `ansible1` host:
++
+[source,text]
+----
+[root@workstation ~]# ssh ansible1.example.com
+Last login: ... from workstation-...rhpds.opentlc.com
+[root@ansible1 ~]#
+----
+
+. Change to the Ansible Tower inventory directory:
++
+[source,text]
+----
+[root@ansible1 ~]# cd /var/lib/awx/venv/tower/lib/python2.7/site-packages/awx/plugins/inventory
+[root@ansible1 inventory]#
+----
+
+. Back up the existing Python script:
++
+[source,text]
+----
+[root@ansible1 inventory]# mv cloudforms.py cloudforms.py.orig
+----
+
+. Retrieve the updated script from GitHub:
++
+[source,text]
+----
+[root@ansible1 inventory]# wget https://raw.githubusercontent.com/redhat-gpe/cf_customization_public/master/inventory/cloudforms.py
+----
+
+. Clean up permissions for the downloaded file:
++
+[source,text]
+----
+[root@ansible1 inventory]# chown awx:awx cloudforms.py;chmod +x cloudforms.py
+----
+
+
+== Use Button to Integrate Ansible Tower and CloudForms
+
+In this section, you take a predefined role from Ansible Galaxy and apply it to a VM using a button. This role updates the system's `motd` based on the input you provide.
+
+[TIP]
+Ansible Galaxy is a centralized repository of Ansible roles available at link:https://galaxy.ansible.com["galaxy.ansible.com^"].
+
+=== Create VM
+
+In this section, you create a VM using the CloudForms UI.
+
+. Navigate to *Compute -> Infrastructure -> Virtual Machines*.
+. Navigate to the *VMs* accordion.
+. Click *Lifecycle -> Provision VMs*.
+. Select the `rhel7-guest-image` template and click *Continue*.
+. Select the *Catalog* tab and enter `motdlab.example.com` for *VM Name*.
+. Select the *Environment* tab and check the *Choose Automatically* box.
+. Select the *Customize* tab, and enter or select the following:
+* *Root Password*: `r3dh4t1!`
+* *Address Mode*: `Static`
+* *Host Name*: `motdlab.example.com`
+* *IP Address*: `192.168.1.150`
+* *Subnet Mask*: `16`
+* *Gateway*: `192.168.0.2`
+* *DNS Server list*: `192.168.0.1`
+* *DNS Suffix list*: `example.com`
+* *Script Name*: `Red Hat Cloud Image Template`
+. Click *Submit*.
+
+. While the VM is provisioning, continue with the next steps.
+
+=== Configure Machine Credential in Ansible Tower
+
+. Log in as the `admin` user with password `r3dh4t1!` to Ansible Tower at `https://ansible1-$GUID.rhpds.opentlc.com`.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
+
+. Log in to `workstation` and become `root` using `sudo -i`.
+. Run the following command:
++
+[source,text]
+----
+[root@workstation-GUID ~]# cat .ssh/id_rsa
+----
+. Copy all of the text including `*-----BEGIN RSA PRIVATE KEY-----* and *-----END RSA PRIVATE KEY-----*`.
+. At the top right, click image:images/gear.png[].
+. Click *CREDENTIALS*.
+. If you see *Root Password*, delete it by clicking the trash can icon.
+. Click image:images/ansible_green_add_icon.png[] and enter the following:
+
+* *NAME*: `Root Password`
+* *TYPE*: `Machine`
+* *USERNAME*: `root`
+* *PASSWORD*: `r3dh4t1!`
+* *PRIVATE KEY*: Paste the key you copied from `workstation`
++
+[NOTE]
+This information is necessary for Ansible Tower to log in to the VMs you build.
+. Click *SAVE*
+
+=== Configure CloudForms Credential in Ansible Tower
+
+. At the top right, click the image:images/gear.png[].
+. Click *CREDENTIALS*.
+. Click image:images/ansible_green_add_icon.png[] and enter the following:
+
+* *NAME*: `CloudForms Admin`
+* *TYPE*: `Red Hat CloudForms`
+* *CLOUDFORMS URL*: `https://cf.example.com`
+* *USERNAME*: `admin`
+* *PASSWORD*: `r3dh4t1!`
+. Click *SAVE*
++
+[NOTE]
+This information is necessary for Ansible Tower to get a list of hosts from CloudForms.
+
+=== Configure Project in Ansible Tower
+
+. Navigate to *PROJECTS* at the top of the screen.
+. Click image:images/ansible_green_add_icon.png[] and enter the following:
+* *Name*: `cf_customization`
+* *Organization*: `Red Hat` and click *Select*
+* *SCM Type*: `Git`
+* *SCM URL*: `https://github.com/redhat-gpe/cf_customization_public`
+. Check the *Update on Launch* box.
+. Click *SAVE*.
+
+=== Configure Job Template in Ansible Tower
+
+. Navigate to *PROJECTS* at the top of the screen.
+. Next to `cf_customization`, click image:images/ansible_cloud_download_icon.png[].
++
+[TIP]
+If a pop-up window appears, click *OK*.
+
+* The ball icon next to `cf_customization` stops pulsating when the update is complete.
+* This provides you with the latest version of the Ansible playbooks from the GitHub repository.
+
+=== Create CloudForms Inventory
+
+. At the top of the screen, click *INVENTORIES*.
+.. Click image:images/ansible_green_add_icon.png[], and enter the following:
+* *NAME*: `CloudForms Inventory`
+* *ORGANIZATION*: `Red Hat`
+
+.. Click *SAVE*
+.. In the new inventory page, click image:images/addgroup.png[] and complete the following:
+
+* *NAME*: `CloudForms Hosts`
+* *SOURCE*: `Red Hat CloudForms`
+* *CLOUD CREDENTIAL*: `CloudForms Admin`
+
+.. Check the *Update on Launch* box.
+.. Click *SAVE*.
++
+[NOTE]
+This probes CloudForms for a list of hosts and provides an inventory.
+
+. At the top of the screen, click *TEMPLATES*.
+.. Click image:images/ansible_green_add_icon.png[] then *Job Template* to add a job template and set these values:
+* *NAME*: `motd`
+* *INVENTORY*: `CloudForms Inventory`
+* *PROJECT*: `cf_customization`
+* *PLAYBOOK*: `motd_playbook.yml`
+* *MACHINE CREDENTIAL*: `Root Password`
+.. Below the *LIMIT* text box, select `Prompt on launch`.
+.. Below the *EXTRA VARIABLES* text box, select `Prompt on launch`.
+.. Click *SAVE*.
+
+=== Manage Job Template in CloudForms
+
+. Log in to your CloudForms appliance as the `admin` user.
+
+. Navigate to *Automation -> Ansible Tower -> Explorer*.
+.. Select the *Providers* accordion.
+.. Go to *All Ansible Tower Providers -> ansible1.example.com Automation Manager*.
+.. If you do _not_ see `CloudForms Inventory` show up below the line that you just clicked, do the following:
+* Click *Configuration -> Refresh Relationships and Power states* and click *OK*.
+* In the CloudForms UI (not the browser), click image:images/reload_refresh_icon.png[] until `CloudForms Inventory` appears.
++
+[NOTE]
+This can take 5 to 10 minutes.
+
+.. Click the *Job Templates* accordion.
+.. Navigate to *All Ansible Tower Job Templates -> ansible1.example.com Automation Manager*.
+.. If you do _not_ see `motd` show up below the line you just clicked, do the following:
+* Click *Configuration -> Refresh Relationships and Power states* and click *OK*.
+* In the CloudForms UI (not the browser), click image:images/reload_refresh_icon.png[] until `motd` appears.
++
+[NOTE]
+This can take 5 to 10 minutes.
++
+[TIP]
+If this takes longer than 10 minutes, there is a problem with your environment. Make sure the Automate role is enabled and you do not have any hung providers. Also make sure that `ansible1` is up and running.
+
+. Click the `motd` job template.
+
+. Click *Configuration -> Create Service Dialog from this Job Template*.
+
+. In *Service Dialog Name*, enter `MOTD Dialog`.
+
+. Click *Save*.
++
+[TIP]
+If you define variables in the playbook, this dialog has fields you can populate.
+
+=== Create VM Button and Link to Job Template
+
+. In CloudForms, navigate to *Automation -> Automate -> Customization*.
+
+. Select the *Buttons* accordion.
+
+. In the *VM and Instance* object type, create a new button group called `Tower Jobs`.
+
+. In the button group you just created, create a button called `Set MOTD`.
+
+. For *Button Image*, choose any image.
+
+. For *Dialog*, choose the `MOTD Dialog` that you created earlier.
+
+. In *Request*, enter `Ansible_Tower_Job`.
+
+. In the first *Attribute/Value Pairs*, enter `job_template_name` for the attribute and `motd` for the value, and then click *Add*:
++
+image::images/button_config.png[]
+
+=== Test Button
+
+. Make sure the `motdlab.example.com` VM is completely provisioned before continuing.
+
+. In the CloudForms UI, navigate to the `motdlab.example.com` VM.
+
+. If the *IP Addresses* field in the VM does not include `192.168.1.150`, do the following:
+.. Click *Configuration -> Refresh Relationships and Power States*.
+.. Wait a minute and refresh the VM in the UI.
++
+[NOTE]
+There is a race condition in which the VM reports its original IP before `cloud-init` changes it. Eventually this fixes itself, but because you are doing this in quick succession you must force a refresh.
+
+. Click *Tower Jobs -> Set MOTD*.
+
+. Leave *Limit* blank and click *Submit*.
++
+[NOTE]
+*Limit* is automatically set to the VM's host name.
++
+[IMPORTANT]
+Make sure you are monitoring the `automation.log` on the CloudForms appliance.
+
+=== Examine Results
+
+. Log in to `https://ansible1-$GUID.rhpds.opentlc.com` with the `admin` user and password `r3dh4t1!`.
+.. At the top, click *JOBS*.
+.. Look for the `motd` job.
+
+. Navigate to *Automation -> Ansible Tower -> Jobs*.
+.. When the `motd` job appears, click *Automation* on the left side to refresh the screen.
+.. Eventually the *Status* shows `Successful`.
+.. Keep an eye on the `automation.log`.
++
+[NOTE]
+Because you are launching from a button, the limit (or the scope Ansible deploys to) is automatically set to the VM on which you are executing the job. You can potentially remove or disable the limit field in the dialog, because it is not used. However, in the next section, you use this same dialog from a service, so keep this limit field because you may want to have separate dialogs for button-initiated jobs and service-initiated jobs.
+
+. When the job is successful, use SSH to access the `motdlab` host from the `workstation` host using its IP address, with username `root` and password `r3dh4t1!`:
++
+[source,text]
+----
+[root@workstation ~]# ssh 192.168.1.150
+----
++
+.Sample Output
+[source,text]
+----
+... OUTPUT OMITTED ...
+CloudForms Rocks
+ FQDN:    motdlab.example.com
+ Distro:  RedHat 7.2 Maipo
+ Virtual: YES
+
+ CPUs:    1
+ RAM:     1.0GB
+
+[root@motdlab ~]#
+----
+
+
+== Use Service to Integrate Ansible Tower and CloudForms
+
+In this section, you use the same Ansible job template for the MOTD, but you launch it as a service.
+
+=== Create Catalog and Catalog Item
+
+. Log in to the CloudForms appliance as the `admin` user.
+
+. Navigate to *Services -> Catalogs*.
+
+. Select the *Catalogs* accordion.
+
+. Create a catalog called `Ansible Tower Jobs`.
+
+. Select the *Catalog Items* accordion.
+
+. Create a catalog item:
+.. Set the *Type* to `AnsibleTower`.
+.. For *Name* enter `MOTD Job`.
+.. Check *Display in Catalog* and set these values:
+* *Catalog*: `Ansible Tower Jobs`
+* *Dialog*: `MOTD Dialog`
+* *Provider*: `ansible1.example.com Automation Manager`
+* *Ansible Tower Job Template*: `motd`
+.. Click *Add*.
+
+. If not already logged in, use SSH to log in to `motdlab.example.com` as `root` (using its IP address) and clear the old `motd`:
++
+[source,text]
+----
+[root@workstation ~]# ssh 192.168.1.150
+[root@motdlab ~]# cat /dev/null > /etc/motd
+[root@motdlab ~]# cat /etc/motd
+----
+
+=== Order Service
+
+. Navigate to *Services -> Catalogs*.
+
+. Select the *Service Catalogs* accordion.
+
+. Select *Ansible Tower Jobs -> MOTD Job* and click *Order*.
+
+. For *Limit*, enter `motdlab.example.com`, and click *Submit*.
+
+=== Examine Results
+
+[NOTE]
+Because the process must go through the service provisioning state machine, it takes much longer than using a button.
+
+. Log in to `https://ansible1-$GUID.rhpds.opentlc.com` with the `admin` user and password `r3dh4t1!`.
+.. At the top, click *JOBS*.
+.. Look for a new `motd` job.
+
+. Navigate to *Automation -> Ansible Tower -> Jobs*.
+.. When the `motd` appears, click *Automation* on the left side to refresh the screen.
+.. Wait for the *Status* to show `Successful`.
+.. Keep an eye on `automation.log`.
++
+[TIP]
+You can also look at *Services -> Requests* to see the service status.
+
+. When the job is successful, you can remotely connect using SSH to the `motdlab` host from the `workstation` host using its IP address:
++
+[source,text]
+----
+[root@workstation ~]# ssh 192.168.1.150
+----
++
+.Sample Output
+[source,text]
+----
+... OUTPUT OMITTED ...
+CloudForms Rocks
+ FQDN:    motdlab.example.com
+ Distro:  RedHat 7.2 Maipo
+ Virtual: YES
+
+ CPUs:    1
+ RAM:     1.0GB
+
+[root@motdlab ~]#
+----
+
+
+== Insert Extra Variables into Ansible Job
+
+=== Create Job Template in Tower
+
+. Create a job template in Ansible Tower named `motd2`.
+.. Configure the new job with the same exact configuration as `motd` -- but this time, set *PLAYBOOK* to `motd_playbook2.yml`.
+.. Below the *LIMIT* text box, check the *Prompt on launch* box.
+.. In the *EXTRA VARIABLES* text box enter:
++
+[source,text]
+----
+---
+motd_text:
+----
+.. Below the *EXTRA VARIABLES* text box, check the *Prompt on launch* box.
+
+=== Refresh Provider in CloudForms and Create Service Dialog
+
+. In CloudForms, refresh the Ansible Tower provider so that you can see the new job template.
+
+. In the Ansible Tower provider in CloudForms, select the new job template, then *Configuration -> Create Service Dialog from this Job Template*, and name the dialog `MOTD Dialog With Variables`.
+
+=== Examine and Edit New Service Dialog
+
+. Navigate to *Automation -> Automate -> Customization*.
+
+. Select the *Service Dialogs* accordion.
+
+. Select the newly created `MOTD Dialog With Variables` service dialog.
+* Expect to see an extra variable element defined called `motd_text`.
+
+. Edit the `MOTD Dialog With Variables` service dialog.
+
+.. Click *Extra Variables -> motd_text*.
+.. Uncheck the *Read only* box and save the changes.
+* CloudForms sets the imported extra variables' elements to *Read only*. 
+
+=== Update Custom Button
+
+. Edit the `Set MOTD` button that you created earlier.
+.. Change *Dialog* to `MOTD Dialog With Variables`.
+.. Change the value for `job_template_name` to `motd2`.
+.. Save the changes.
+
+=== Test New Settings
+
+. Navigate to the `motdlab.example.com` VM.
+.. Click *Tower Jobs -> Set MOTD*.
+.. Leave *Limit* blank.
+.. For *motd_text*, enter a message of your choosing.
+.. Click *Submit*.
+
+=== Examine Outcome
+
+. Wait for the job to complete.
+
+. When the job is complete, use SSH to remotely connect to the `motdlab.example.com` host and examine `/etc/motd`:
++
+[source,text]
+----
+[root@motdlab ~]# cat /etc/motd
+----
++
+.Sample Output
+[source,text]
+----
+I'm being nice
+ FQDN:    motdlab.example.com
+ Distro:  RedHat 7.2 Maipo
+ Virtual: YES
+
+ CPUs:    1
+ RAM:     1.0GB
+----
+* The message is inserted at the beginning of the MOTD.
+
+=== Clean Up
+
+. When you are done with this section, retire the `motdlab.example.com` VM.
+
+
+== Use Ansible Tower and Satellite 6 Integration During Provisioning
+
+It is a relatively common requirement to register newly provisioned Linux VMs directly with Red Hat Satellite 6 (or Foreman) as part of the provisioning process. This ensures that the resultant VM is patched and up-to-date and configured by Puppet according to a server role.
+
+Registering a new system with Satellite 6 currently requires two operations. You must create a Satellite _host_ entry, which registers the server as a configuration management client, manageable by Puppet. You also must use `subscription-manager` to activate the server as a _content host_, which associates one or more Red Hat subscriptions with the server, and makes software package repository content available.
+
+In this exercise, you look at the changes to your provisioning workflow that are needed to make this happen.
+
+=== Explore Triggering Client Operations
+
+In this section, you clone a VM from a fully installed _fat_ template. Fat templates are those for which no kickstarting is performed. Cloning from template (infrastructure providers) or image (cloud providers) presents you with the challenge of how to initiate several commands on the new VM, including `subscription-manager register`, using dynamic arguments such as `--activationkey` or `--org`.
+
+There are several ways of remotely running commands in a newly created VM:
+
+* VMware VIX SDK Library, to connect to VMware Tools running in a guest (VMware only)
+* `cloud-init` (Red Hat Enterprise Virtualization, OpenStack, and Amazon providers)
+* SSH, including Ansible (all providers)
+
+In this lab, you trigger the subscription-manager registration of the newly provisioned system using an Ansible playbook via Ansible Tower.
+
+A host entry in Satellite 6 requires certain parameters:
+
+* Host name
+* Host's MAC address
+* Location
+* Organization
+* Puppet environment
+* Architecture
+* Operating system
+* Media
+* Partition table
+* Domain
+* Root password
+
+You can define a host group in Satellite, containing defaults for several of these parameters. When you create the host entry, you can specify a host group as a configuration template.
+
+=== Confirm Satellite Environment Configuration
+
+In this section, you confirm the Satellite environment configuration. To keep the example simple, you allow for provisioning Red Hat Enterprise Linux 6 and 7 servers (both 64-bit), but you create a single generic host group and activation key for each operating system version.
+
+==== Confirm Activation Keys in Satellite 6
+
+When a newly provisioned system registers with Satellite as a content host, it can include an activation key name as an argument to `subscription-manager`.
+
+. Log in to your Satellite 6 server at `https://sat-$GUID.rhpds.opentlc.com` with user `admin` and password `r3dh4t1!`.
+. In *Content -> Activation keys*, confirm that there is an existing activation key called `rhel7`:
++
+image::images/satscreenshot6.png[]
+
+* These activation keys define defaults for:
+
+** Content view and life-cycle environment ("Production")
+** Red Hat subscriptions
+** Repository content sets
+
+* Ansible subscribes the VM to Satellite using this `rhel6` key.
+
+==== Confirm Host Groups in Satellite 6
+
+. In your Satellite 6 server, go to *Configure -> Host Groups* and confirm that there is a host group named `Generic_RHEL7_Servers`:
++
+image::images/satscreenshot1.png[]
+
+* Host groups define defaults for:
+
+** Puppet environment
+** Architecture
+** Operating system
+** Media
+** Partition table
+** Domain
+** Root password
+
+=== Confirm Satellite Services
+
+Sometimes the Satellite server does not start up correctly in the lab environment.
+
+. From `workstation`, use SSH as `root` to access `sat.example.com`.
+. Run the following command to check the services status:
++
+[source,text]
+----
+[root@sat ~]# katello-service status
+----
+
+.. Look for failures on the last line of the output:
++
+[source,text]
+----
+Some services failed to status: mongod,pulp_celerybeat
+----
+
+.. If you see this failure, do this:
++
+[source,text]
+----
+[root@sat ~]# katello-service restart
+----
+
+.. If you had to restart the services, run the status again:
++
+[source,text]
+----
+[root@sat ~]# katello-service status
+----
+
+.. Look for success on the last line of the output:
++
+[source,text]
+----
+Success!
+----
+
+=== Configure Ansible Job Template
+
+. Log in to `ansible1-$GUID.rhpds.opentlc.com` as the `admin` user with password `r3dh4t1!`.
+
+. At the top of the screen, click *TEMPLATES*.
+
+. If you see an existing template called *activate_satellite*, delete it by clicking the trash can icon to its right.
+
+. Click image:images/ansible_green_add_icon.png[], then select *Job Template*, and add or select the following parameters:
+* *NAME*: `activate_satellite`.
+* *INVENTORY*: `CloudForms Inventory`
+* *PROJECT*: `cf_customization`
+* *PLAYBOOK*: `satellite_config/satellite_config.yml`
+** You may have to scroll down in the list.
+* *MACHINE CREDENTIAL*: `Root Password`
+
+. Under the *LIMIT* text box, check the *Prompt on launch* box.
+
+. Under the *EXTRA VARIABLES* text box, check the *Prompt on launch* box.
+
+. Click *SAVE*.
+
+. Refresh the `ansible1.example.com` provider in CloudForms.
+
+=== Modify CloudForms Provisioning Workflow
+
+From the CloudForms UI, make two additions to the `VMProvision_VM` state machine. You add a `RegisterSatellite` state to register the new VM with Satellite 6 as a host. You create code that integrates with the Satellite API to add the VM to a host group.
+
+You also add an `ActivateSatellite` state to launch an Ansible playbook via Ansible Tower and an SSH that initiates the `subscription-manager` activation of the new system as a content host.
+
+Both of these stages must be added at some point after the VM is provisioned.
+
+. Disable all custom domains.
+
+. Create a domain called `SatDomain` and make sure it is *enabled*.
+
+. Copy the `/ManageIQ/Infrastructure/VM/Provisioning/StateMachines/VMProvision_VM/Provision VM from Template (template)` instance to `SatDomain`.
+
+. Edit the class schema at `/SatDomain/Infrastructure/VM/Provisioning/StateMachines/VMProvision_VM` to add these states:
+* `RegisterSatellite`
+* `ActivateSatellite`
++
+image::images/satelliteedits.png[]
++
+. Modify the schema so that it looks like this:
++
+image::images/schema_order.png[]
+
+. Edit the `/SatDomain/Infrastructure/VM/Provisioning/StateMachines/VMProvision_VM/Provision VM from Template (template)` instance:
+.. Populate `RegisterSatellite` with `/Integration/Satellite/Methods/RegisterSatellite`.
+.. Populate `ActivateSatellite` with `/AutomationManagement/AnsibleTower/Operations/JobTemplate/activate_satellite`.
++
+[NOTE]
+This uses the built-in functionality in Automate to launch an Ansible playbook via Ansible Tower for the VM being built. The `activate_satellite` string corresponds to a job template predefined in your Ansible Tower. You could put any job template defined in Ansible Tower that you wish in here assuming it works with the host being built. You can see a list of job templates that CloudForms is aware of by logging in to CloudForms and navigating to *Configuration -> Configuration Management -> Ansible Tower Job Templates -> All Ansible Tower Job Templates -> ansible1.example.com Configuration Manager*:
++
+image::images/satscreenshot2.png[]
+
+.. Save your changes.
+
+. In `/SatDomain`, create the namespace path `/Integration/Satellite`.
+
+. Create a class at `/SatDomain/Integration/Satellite/Methods`.
+
+. Edit the `/SatDomain/Integration/Satellite/Methods` schema:
+.. Add the following components to the schema, using the password `r3dh4t1!`:
++
+image::images/schema_config.png[]
++
+[IMPORTANT]
+Make sure *organization* and *location* appear exactly as you see here with capitalization and spaces correct.
+
+.. Verify that `(execute)` is the last name in the schema order:
++
+image::images/schema_order2.png[]
+
+=== Create `RegisterSatellite` Instance
+
+Your new schema can store some defaults that can be overridden.
+
+. Create an instance in `/SatDomain/Integration/Satellite/Methods` named `RegisterSatellite` with `(execute)` set to `register_satellite`:
++
+image::images/satscreenshot3.png[]
+* The `register_satellite` method can access these in the usual way, from `$evm.object`:
++
+[source,ruby]
+----
+  servername    = $evm.object['servername']
+  username      = $evm.object['username']
+  password      = $evm.object.decrypt('password')
+  organization  = $evm.object['organization']
+  location      = $evm.object['location']
+----
+
+. Create the `register_satellite` method in `/SatDomain/Integration/Satellite/Methods` with the code from link:https://www.opentlc.com/download/cf_customization_4.5/scripts/register_satellite.rb["register_satellite.rb^"].
++
+[IMPORTANT]
+Do not copy the code you see below--use the code from the previous link. The code below is just a snippet and description of what it does.
++
+[NOTE]
+Satellite Registration using the API can be done via Ansible, but you use Ruby for this example.
+
+* Assuming the VM being built is Linux (which it is in this case), the code selects a host group by testing the VM operating system object's `.product_name` attribute:
++
+[source,ruby]
+----
+...
+prov = $evm.root['miq_provision']
+template = prov.source
+vm = prov.destination
+
+if template.platform == "linux"
+  #
+  # Pick a host group based on the operating system being provisioned
+  #
+  if vm.operating_system.product_name == 'Red Hat Enterprise Linux 6 (64-bit)' || vm.operating_system.product_name == 'rhel_6x64'
+    hostgroup = 'Generic_RHEL6_Servers'
+  elsif vm.operating_system.product_name == 'Red Hat Enterprise Linux 7 (64-bit)' || vm.operating_system.product_name == 'rhel_7x64'
+    hostgroup = 'Generic_RHEL7_Servers'
+  else
+    raise "Unrecognised Operating System Name"
+  end
+...
+----
+
+* The code creates the new host entry using the Satellite API, which requires the internal Satellite ID for each parameter rather than a name. It defines a generic `query_id` method, and calls it three times to retrieve the IDs for the location, organization, and host group:
++
+[source,ruby]
+----
+def query_id (uri, field, content)
+
+  url = URI.escape("#{@uri_base}/#{uri}?search=#{field}=\"#{content}\"")
+  request = RestClient::Request.new(
+    method: :get,
+    url: url,
+    headers: @headers,
+    verify_ssl: OpenSSL::SSL::VERIFY_NONE
+  )
+
+  id = nil
+  rest_result = request.execute
+  json_parse = JSON.parse(rest_result)
+
+  subtotal = json_parse['subtotal'].to_i
+  if subtotal == 1
+    id = json_parse['results'][0]['id'].to_s
+  elsif subtotal.zero?
+    $evm.log(:error, "Query to #{url} failed, no result")
+    id = -1
+  elsif subtotal > 1
+    $evm.log(:error, "Query to #{url} returned multiple results")
+    id = -1
+  else
+    $evm.log(:error, "Query to #{url} failed, unknown condition")
+    id = -1
+  end
+  id
+end
+
+...
+$evm.log(:info, "Getting hostgroup id for '#{hostgroup}' from Satellite")
+hostgroup_id = query_id("hostgroups", "name", hostgroup)
+raise "Cannot determine hostgroup id for '#{hostgroup}'" if hostgroup_id == -1
+$evm.log(:info, "hostgroup_id: #{hostgroup_id}")
+----
+
+* Finally, the code creates the host record. It specifies the `:build` parameter as `false`, because you do not want Satellite to provision the VM:
++
+[source,ruby]
+----
+#
+# Create the host record
+#
+hostinfo = {
+    :name             => vm.name,
+    :mac              => vm.mac_addresses[0],
+    :hostgroup_id     => hostgroup_id,
+    :location_id      => location_id,
+    :organization_id  => organization_id,
+    :build            => 'false'
+    }
+$evm.log(:info, "Creating host record in Satellite")
+
+uri = "#{@uri_base}/hosts"
+request = RestClient::Request.new(
+    method: :post,
+    url: uri,
+    headers: @headers,
+    verify_ssl: OpenSSL::SSL::VERIFY_NONE,
+    payload: { host: hostinfo }.to_json
+  )
+rest_result = request.execute
+----
+
+=== Test Integration and Monitor Progress
+
+. Navigate to *Compute -> Infrastructure -> Virtual Machines*.
+. Navigate to the *VMs* accordion.
+. Click *Lifecycle -> Provision VMs*.
+. Select the `rhel7-guest-image` template and click *Continue*.
+. Select the *Catalog* tab and enter `motdlab.example.com` for *VM Name*.
+. Select the *Environment* tab and check the *Choose Automatically* box.
+. Select the *Customize* tab, and enter or select the following:
+* *Root Password*: `r3dh4t1!`
+* *Address Mode*: `Static`
+* *Host Name*: `motdlab.example.com`
+* *IP Address*: `192.168.1.150`
+* *Subnet Mask*: `16`
+* *Gateway*: `192.168.0.2`
+* *DNS Server list*: `192.168.0.1`
+* *DNS Suffix list*: `example.com`
+* *Script Name*: `Red Hat Cloud Image Template`
++
+[IMPORTANT]
+Make sure you use the requested FQDN in the VM host name so that the Puppet master can auto-sign the certificate later.
++
+image::images/satscreenshot8.png[]
+
+. Click *Submit*.
++
+[NOTE]
+You must monitor everything in this section at the same time.
+
+. Monitor `automation.log` on the CloudForms appliance and check for output from `register_satellite` in `automation.log`:
++
+[source,text]
+----
+<AEMethod register_satellite> Getting hostgroup id for 'Generic_RHEL7_Servers' from Satellite
+<AEMethod register_satellite> hostgroup_id: ..
+<AEMethod register_satellite> Getting location id for 'Default Location' from Satellite
+<AEMethod register_satellite> location_id: ..
+<AEMethod register_satellite> Getting organization id for 'Default Organization' from Satellite
+<AEMethod register_satellite> organization_id: ..
+<AEMethod register_satellite> Creating host record in Satellite with the following details: \
+        {:name=>"satlab.example.com", :mac=>"00:...", :hostgroup_id=>"..", \
+         :location_id=>"..", :organization_id=>"..", :build=>"false"}
+<AEMethod register_satellite> return code => \<200>
+----
+
+. Log in to `https://ansible1-$GUID.rhpds.opentlc.com` and click *JOBS* at the top of the screen.
+
+. Click the `activate_satellite` job.
+
+. Look for output similar to this:
++
+image::images/ansiblelab2.png[]
+
+. Examine the *Apply Puppet* step of the Ansible job and expect to see an ignored error:
++
+[source,text]
+----
+TASK [Apply Puppet] ************************************************************20:53:00
+41
+fatal: [satlab.example.com]: FAILED! => {"changed": true, "cmd": ["/usr/bin/puppet", "agent", "-t", "--server", "sat.example.com"], "delta": "0:00:08.493309", "end": "2017-06-16 20:53:08.719643", "failed": true, "rc": 2, "start": "2017-06-16 20:53:00.226334", "stderr": "", "stderr_lines": [], "stdout": "\Info: Retrieving pluginfacts\\n\Info: Retrieving plugin\\n\Info: Caching catalog for satlab.example.com\\n\Info: Applying configuration version '1497660789'\\n\[mNotice: /Stage[main]/Motd/File[/etc/motd]/content: \n--- /etc/motd\t2013-06-07 10:31:32.000000000 -0400\n+++ /tmp/puppet-file20170616-10957-1bdvmaa\t2017-06-16 20:53:07.850364367 -0400\n@@ -0,0 +1 @@\n+This is the default message \n\\n\Info: Computing checksum on file /etc/motd\\n\Info: /Stage[main]/Motd/File[/etc/motd]: Filebucketed /etc/motd to puppet with sum d41d8cd98f00b204e9800998ecf8427e\\n\[mNotice: /Stag…
+----
+
+. Log in to `https://sat-$GUID.rhpds.opentlc.com` and monitor *Hosts -> All Hosts*.
+
+* In Satellite *Hosts -> All Hosts*, you eventually see a new host entry:
++
+image::images/satscreenshot10.png[]
+
+* In Satellite *Hosts -> Content Hosts*, you eventually see a new content host entry, showing that all packages need to be updated (Ansible is doing this for you now):
++
+image::images/satscreenshot11.png[]
+
+
+=== Examine Playbook and Job Completion
+
+. The Ansible Playbook you used to activate Satellite is pulled dynamically from link:https://github.com/redhat-gpe/cf_customization_public/blob/master/satellite_config/satellite_config.yml["satellite_config.yml^"]. Take a look at it while you wait for the Ansible job to complete the yum update.
+
+. When the Ansible job is complete, the content host record shows that all of the packages are updated (this can take a while):
++
+image::images/content_done.png[]
+
+=== Keep Domain
+
+. Do not delete or disable the `SatDomain` domain, as it is used in a future lab.
