@@ -4,7 +4,7 @@
 :linkattrs:
 
 
-== Introduction to Automation Datastore Lab
+== Introduction to ALab
 
 :numbered:
 
@@ -24,19 +24,6 @@ Your CloudForms Customization lab environment contains the following:
 
 [IMPORTANT]
 The CloudForms appliance is fully configured with all of the above providers.
-
-=== Set Up SSH
-
-To access your workstation system using SSH, you must use your OPENTLC SSO username and public SSH key. Unless otherwise noted, you cannot use SSH to connect directly as `root`.
-
-If you have not already done so, you need to provide a public SSH key:
-
-. Navigate to the link:https://www.opentlc.com/update[Update User page^] and log in.
-
-. Paste your public key in that location.
-+
-[NOTE]
-For more information on generating an SSH key, see link:https://www.opentlc.com/ssh.html[Setting Up an SSH Key Pair^]. This page also includes some common troubleshooting for SSH connectivity.
 
 === Access Lab Workstation
 
