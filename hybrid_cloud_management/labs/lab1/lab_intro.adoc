@@ -171,7 +171,7 @@ ansible-playbook -i inventory playbook2.yml
 Add the following lines:
 ----
 - hosts
-*    vars:*
-*      body_content: "This page is now changed"*
+  *vars:*
+     *body_content: "This page is now changed"*
   roles:
 ----
