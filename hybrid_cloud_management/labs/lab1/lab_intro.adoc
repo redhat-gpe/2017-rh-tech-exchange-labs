@@ -111,3 +111,12 @@ cd /home/student/rhte/na/hybrid_cloud_management/labs/lab1
 If you notice, the last piece of the playbook is to test that you get a *200* response from the webserver from a different machine.
 +
 The first play in the playbook runs on the *ansible1.example.com* host while the second runs from your workstation.
++
+. Run the *playbook1* playbook.
+----
+ansible-playbook playbook1.yml
+----
++
+Analyze the run log and view the output.
+[NOTE]
+This output is verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
