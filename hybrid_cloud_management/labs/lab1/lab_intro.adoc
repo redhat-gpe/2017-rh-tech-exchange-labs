@@ -88,10 +88,12 @@ Verify each provider's status following _every_ lab environment shutdown.
 
 == Lab 1 Instructions
 
-. Change directory to /home/student
+. Log on to your workstation machine as previously described.
+
+. From there, log in to the *ansible1.example.com* host
 +
 ----
-cd /home/student
+ssh root@ansible1.example.com
 ----
 
 . Clone the Tech Exchange repository from https://github.com/redhat-gpe/rhte-na.git
@@ -103,19 +105,19 @@ git clone https://github.com/redhat-gpe/rhte-na.git
 . Change directory to rhte-na/hybrid_cloud_management/labs/lab1
 +
 ----
-cd /home/student/rhte/na/hybrid_cloud_management/labs/lab1
+cd /root/rhte/na/hybrid_cloud_management/labs/lab1
 ----
 
 . View *playbook1* within this directory. The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
 +
 If you notice, the last piece of the playbook is to test that you get a *200* response from the webserver from a different machine.
 +
-The first play in the playbook runs on the *ansible1.example.com* host while the second runs from your workstation.
+The first play in the playbook runs on the *workstation.example.com* host while the second runs from ansible1.example.com.
 
 . Run the *playbook1* playbook.
 +
 ----
-ansible-playbook playbook1.yml
+ansible-playbook -i inventory playbook1.yml
 ----
 +
 Analyze the run log and view the output.
@@ -126,7 +128,7 @@ This output is not verbose. For standard output open the playbook add *--verbose
 . Run the *cleanup1* playbook.
 +
 ----
-ansible-playbook cleanup1.yml
+ansible-playbook -i inventory cleanup1.yml
 ----
 
 . Switch to the roles directory under the current directory
@@ -166,7 +168,7 @@ ansible-playbook -i inventory playbook2.yml
 ansible-playbook -i inventory playbook2.yml
 ----
 
-. Modify the playbook to set variables for the role to use.
+. Modify the playbook to set a variable for the role to use.
 +
 Add the following lines:
 +
@@ -177,3 +179,10 @@ Add the following lines:
      *body_content: "This page is now changed"*
   roles:
 ----
+
+. Run the *playbook2.yml* playbook again and observe the change that takes place.
++
+----
+ansible-playbook -i inventory playbook2.yml
+----
+
