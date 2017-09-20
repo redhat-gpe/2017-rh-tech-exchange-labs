@@ -119,4 +119,37 @@ ansible-playbook playbook1.yml
 +
 Analyze the run log and view the output.
 [NOTE]
-This output is verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
+This output is not verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
++
+. Run the *cleanup1* playbook.
+----
+ansible-playbook cleanup1.yml
+----
++
+. Switch to the roles directory under the current directory
+----
+cd roles
+----
++
+. Browse the roles directory, specifically the webserver role directory.
++
+The roles directory has the webserver role as well as a requirements.yml file. We will not be using the requirements.yml file in the main portion of the lab, though for those who have experience you may want to try *insert what lab step this will be* in the *Stretch Goals* section of the lab.
++
+The webserver role provides an example of an ansible role layout. In the tasks folder is a task list for the role with the name *main.yml*. 
+*TODO: Add more description of what is contained in the role*
++
+. Open and view playbook2.
+----
+cd /root/rhte-na/hybrid_cloud_management/labs/lab1
+less playbook2.yml
+----
++
+This playbook is far simpler than *playbook1* but performs the same function.
++
+Notice how the webserver role is included.
++
+. Run the *playbook2* playbook.
+----
+ansible-playbook -i inventory playbook2.yml
+----
+
