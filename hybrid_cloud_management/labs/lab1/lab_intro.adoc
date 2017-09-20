@@ -86,7 +86,7 @@ image::images/recheck.png[]
 [IMPORTANT]
 Verify each provider's status following _every_ lab environment shutdown.
 
-=== Lab 1 Instructions
+== Lab 1 Instructions
 
 1. Change directory to /home/student
 +
