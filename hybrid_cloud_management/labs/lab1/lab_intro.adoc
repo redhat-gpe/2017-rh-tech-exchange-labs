@@ -104,3 +104,8 @@ git clone https://github.com/redhat-gpe/rhte-na.git
 +
 ----
 cd /home/student/rhte/na/hybrid_cloud_management/labs/lab1
+----
++
+4. View *playbook1* within this directory. The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
+. If you notice, the last piece of the playbook is to test that you get a *200* response from the webserver from a different machine.
+. The first play in the playbook runs on the *ansible1.example.com* host while the second runs from your workstation.
