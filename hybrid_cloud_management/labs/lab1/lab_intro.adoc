@@ -86,3 +86,21 @@ image::images/recheck.png[]
 [IMPORTANT]
 Verify each provider's status following _every_ lab environment shutdown.
 
+=== Lab 1 Instructions
+
+1. Change directory to /home/student
++
+---
+cd /home/student
+---
++
+2. Clone the Tech Exchange repository from https://github.com/redhat-gpe/rhte-na.git
++
+---
+git clone https://github.com/redhat-gpe/rhte-na.git
+---
++
+3. Change directory to rhte-na/hybrid_cloud_management/labs/lab1
++
+---
+cd /home/student/rhte/na/hybrid_cloud_management/labs/lab1
