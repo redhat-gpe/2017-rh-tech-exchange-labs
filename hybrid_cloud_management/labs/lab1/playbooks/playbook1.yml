@@ -35,10 +35,10 @@
       copy:
         content: "Welcome to the example.com intranet!\n"
         dest: /var/www/html/index.html
-#- name: test
-#  hosts: localhost
-#  tasks:
-#  - name: connect to intranet
-#    uri:
-#      url: http://servera.lab.example.com
-#      status_code: 200
+- name: test
+  hosts: ansible1.example.com 
+  tasks:
+  - name: connect to intranet
+    uri:
+      url: http://workstation.example.com
+      status_code: 200
