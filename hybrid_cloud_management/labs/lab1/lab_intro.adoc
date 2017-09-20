@@ -88,7 +88,7 @@ Verify each provider's status following _every_ lab environment shutdown.
 
 == Lab 1 Instructions
 
-1. Change directory to /home/student
+. Change directory to /home/student
 +
 ----
 cd /home/student
