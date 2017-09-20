@@ -160,3 +160,18 @@ Notice how the webserver role is included.
 ansible-playbook -i inventory playbook2.yml
 ----
 
+. Run the same step a second time. On the second run though you should notice that all of the steps are labeled as **completed**.
++
+----
+ansible-playbook -i inventory playbook2.yml
+----
+
+. Modify the playbook to set variables for the role to use.
++
+Add the following lines:
+----
+- hosts
+*    vars:*
+*      body_content: "This page is now changed"*
+  roles:
+----
