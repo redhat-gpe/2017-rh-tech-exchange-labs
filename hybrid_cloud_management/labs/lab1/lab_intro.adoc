@@ -169,6 +169,8 @@ ansible-playbook -i inventory playbook2.yml
 . Modify the playbook to set variables for the role to use.
 +
 Add the following lines:
++
+[subs=+quotes]
 ----
 - hosts
   *vars:*
