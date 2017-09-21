@@ -4,7 +4,7 @@
 :linkattrs:
 
 
-== Ansible Automation Lab
+== CloudForms Automation with Ansible Tower
 
 :numbered:
 
@@ -18,8 +18,8 @@
 [WARNING]
 You must verify provider authentication status every time you start your environment. If your providers are not properly authenticated, some of the labs will hang and you will have to start over.
 
-. Delete the VMs in your environment from the other exercises to avoid issues with Ansible Tower license's VM limit.
-* Your Ansible Tower license allows for only 10 managed VMs, and you do not need these moving forward.
+. Delete any VMs in your environment to avoid issues with Ansible Tower license's VM limit.
+* Your Ansible Tower license allows for only 10 managed VMs.
 
 === Create Customization Template
 
@@ -34,7 +34,7 @@ The out-of-the-box `oVirt cloud-init` customization template that comes with Clo
 . Select *Configuration -> Add a New Customization Template*.
 .. Set *Name* to `Red Hat Cloud Image Template`.
 .. Set *Image Type* to `RHEL-6`.
-* Ignore the version number.
+* Ignore the version number.  We are simply using a pre-created image type rather than creating our own.
 .. Set *Type* to `CloudInit`.
 .. Copy the text from link:https://www.opentlc.com/download/cf_customization_4.5/custom-provision.txt["custom-provision.txt^"].
 .. In the *Script* text box, paste the script you copied from `custom-provision.txt` in the previous step.
@@ -594,3 +594,4 @@ image::images/satscreenshot11.png[]
 +
 image::images/content_done.png[]
 
+== Stretch Goal
