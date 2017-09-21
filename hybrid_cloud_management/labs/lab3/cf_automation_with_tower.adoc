@@ -594,4 +594,57 @@ image::images/satscreenshot11.png[]
 +
 image::images/content_done.png[]
 
-== Stretch Goal
+== Stretch Goal: Create Custom Job Template utilizing Ansible Extra Variables in CloudForms
+
++
+[NOTE]
+This is only to be completed if time allows.  Some steps are left out on purpose to challenge your current knowledge and understanding of the CloudForms/Tower integration.  Have fun with it!
+
+=== Create a Project/Playbook in Tower
+
+. Create an empty repository in your personal GitHub account
+
+. Decide what you would like to Automate
+.. Common examples are:
+... Install an RPM package
+... Create a file with content
+
+. Create the Ansible playbook.
+.. Be sure to require an extra variable in this playbook
+
+. Create the Project in Ansible Tower and tie it to your GitHub repository which contains the Ansible Playbook.
+
+
+=== Create Job Template in Tower
+
+. Create a job template in Ansible Tower with the following requirements
+.. Below the *LIMIT* text box, check the *Prompt on launch* box.
+.. This should be tied to the project you just created in the step above.
+.. In the *EXTRA VARIABLES* text box enter any of the required variables like so:
++
+[source,text]
+----
+---
+my_extra_variable:
+----
+.. Below the *EXTRA VARIABLES* text box, check the *Prompt on launch* box.
+
+=== Refresh Provider in CloudForms
+
+. In CloudForms, refresh the Ansible Tower provider so that you can see the new job template.
+
+=== Insert Job Template into Provisioning Workflow
+
+. Using your previous expertise with modifying the VM provisioning workflow, insert your new Playbook into the provisioning workflow.
+
+=== Provision the VM
+
+. Provision a Virtual Machine.
+.. Be sure to use a different IP address than the one used in the previous lab, or retire the satlab.example.com VM completely.
+.. Be sure to use an example.com suffix for the VM name to ensure that the Satellite registration completes successfully.
+
+=== Examine Outcome
+
+. Wait for the VM provision to complete.
+
+. When the VM provision is complete, use SSH to remotely connect to your VM and verify that your playbook executed correctly
