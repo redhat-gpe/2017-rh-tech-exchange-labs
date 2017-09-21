@@ -1,0 +1,19 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+= Private Cloud Adoption
+
+:numbered:
+
+== Overivew
+In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use by two different tenants. The first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner. The second tenant will be scripted. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly.
+
+Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
+
+== Lab Goals
+* Configure OpenStack environment with an external network
+* Configure tenant 1 via Horizon UI
+* Configure tenant 2 via Ansible playbooks (or CLI or API)
+* Stretch Lab: CloudForms to manage OSP
