@@ -596,7 +596,6 @@ image::images/content_done.png[]
 
 == Stretch Goal: Create Custom Job Template utilizing Ansible Extra Variables in CloudForms
 
-+
 [NOTE]
 This is only to be completed if time allows.  Some steps are left out on purpose to challenge your current knowledge and understanding of the CloudForms/Tower integration.  Have fun with it!
 
@@ -640,7 +639,7 @@ my_extra_variable:
 === Provision the VM
 
 . Provision a Virtual Machine.
-.. Be sure to use a different IP address than the one used in the previous lab, or retire the satlab.example.com VM completely.
+.. Be sure to use a different IP address than the one used in the previous lab, or retire the satlab.example.com VM completely and reuse its IP address.
 .. Be sure to use an example.com suffix for the VM name to ensure that the Satellite registration completes successfully.
 
 === Examine Outcome
