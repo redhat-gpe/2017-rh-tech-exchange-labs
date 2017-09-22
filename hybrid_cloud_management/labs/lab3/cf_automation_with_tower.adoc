@@ -25,7 +25,7 @@ You must verify provider authentication status every time you start your environ
 .. Change directories to wherever you wish to store your Tech Exchange SSH Key.
 .. Run the command `wget http://bit.ly/rhte-na-labkey`.
 .. Run the command `chmod 0400 /path_to_key/rhte-na-labkey` to correct private key permissions.
-.. Test the connection via the command `ssh -i /path_to_key/rhte-na-labkey root@workstation-<GUID>.rhpds.opentlc.com`
+.. Test the connection via the command `ssh -i /path_to_key/rhte-na-labkey root@workstation-<GUID>.rhpds.opentlc.com`.  Be sure to substitute your GUID in the command.
 
 == Setup Tower for Job Template Execution via CloudForms
 
