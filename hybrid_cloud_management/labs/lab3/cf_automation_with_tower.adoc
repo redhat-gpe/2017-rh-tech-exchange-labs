@@ -48,9 +48,9 @@ The way to launch Ansible Tower jobs is to point to `/System/Request/ansible_tow
 
 . Navigate to *Automation -> Automate -> Explorer*.
 
-. Create a new domain called `AnsibleTowerLab` and make sure that it is enabled.
+. Create a new domain called `SatDomain` and make sure that it is enabled.
 
-. Copy `/ManageIQ/System/Request/ansible_tower_job` to the `AnsibleTowerLab` domain and keep the same path.
+. Copy `/ManageIQ/System/Request/ansible_tower_job` to the `SatDomain` domain and keep the same path.
 
 . Edit the instance you just copied.
 
@@ -182,8 +182,6 @@ This probes CloudForms for a list of hosts and provides an inventory.
 
 === Configure Ansible Job Template
 
-. Log in to `ansible1-$GUID.rhpds.opentlc.com` as the `admin` user with password `r3dh4t1!`.
-
 . At the top of the screen, click *TEMPLATES*.
 
 . If you see an existing template called *activate_satellite*, delete it by clicking the trash can icon to its right.
@@ -286,7 +284,7 @@ image::images/satscreenshot6.png[]
 ** Red Hat subscriptions
 ** Repository content sets
 
-* Ansible subscribes the VM to Satellite using this `rhel6` key.
+* Ansible subscribes the VM to Satellite using this `rhel7` key.
 
 ==== Confirm Host Groups in Satellite 6
 
@@ -352,9 +350,9 @@ You also add an `ActivateSatellite` state to launch an Ansible playbook via Ansi
 
 Both of these stages must be added at some point after the VM is provisioned.
 
-. Disable all custom domains.
+. Navigate to *Automation -> Automate -> Explorer*
 
-. Create a domain called `SatDomain` and make sure it is *enabled*.
+. Ensure only `ManageIQ`, `RedHat`, and `SatDomain` Automate domains are enabled, and that `SatDomain` is at the top of the tree.  Any other custom domains should be disabled.
 
 . Copy the `/ManageIQ/Infrastructure/VM/Provisioning/StateMachines/VMProvision_VM/Provision VM from Template (template)` instance to `SatDomain`.
 
@@ -364,7 +362,7 @@ Both of these stages must be added at some point after the VM is provisioned.
 +
 image::images/satelliteedits.png[]
 +
-. Modify the schema so that it looks like this:
+. Modify the sequence so that it looks like this:
 +
 image::images/schema_order.png[]
 
@@ -519,8 +517,15 @@ rest_result = request.execute
 . Navigate to the *VMs* accordion.
 . Click *Lifecycle -> Provision VMs*.
 . Select the `rhel7-guest-image` template and click *Continue*.
+. Fill in your *E-Mail*
+. Fill in your *First Name*
+. Fill in your *Last Name*
 . Select the *Catalog* tab and enter `satlab.example.com` for *VM Name*.
 . Select the *Environment* tab and check the *Choose Automatically* box.
++
+[NOTE]
+Please do not change memory, CPU, or disk settings, as we are using a nested virtualization environment with limited resources.
++
 . Select the *Customize* tab, and enter or select the following:
 * *Root Password*: `r3dh4t1!`
 * *Address Mode*: `Static`
