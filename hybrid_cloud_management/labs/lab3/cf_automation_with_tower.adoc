@@ -304,45 +304,9 @@ image::images/satscreenshot2.png[]
 
 .. Save your changes.
 
-. In `/SatDomain`, create the namespace path `/Integration/Satellite`.
+. Navigate to `/SatDomain/Integration/Satellite/Methods/RegisterSatellite` and examine the contents.
+. Also examine the contents of the `register_satellite` method in the same namespace/class.  Below outlines the code:
 
-. Create a class at `/SatDomain/Integration/Satellite/Methods`.
-
-. Edit the `/SatDomain/Integration/Satellite/Methods` schema:
-.. Add the following components to the schema, using the password `r3dh4t1!`:
-+
-image::images/schema_config.png[]
-+
-[IMPORTANT]
-Make sure *organization* and *location* appear exactly as you see here with capitalization and spaces correct.
-
-.. Verify that `(execute)` is the last name in the schema order:
-+
-image::images/schema_order2.png[]
-
-=== Create `RegisterSatellite` Instance
-
-Your new schema can store some defaults that can be overridden.
-
-. Create an instance in `/SatDomain/Integration/Satellite/Methods` named `RegisterSatellite` with `(execute)` set to `register_satellite`:
-+
-image::images/satscreenshot3.png[]
-* The `register_satellite` method can access these in the usual way, from `$evm.object`:
-+
-[source,ruby]
-----
-  servername    = $evm.object['servername']
-  username      = $evm.object['username']
-  password      = $evm.object.decrypt('password')
-  organization  = $evm.object['organization']
-  location      = $evm.object['location']
-----
-
-. Create the `register_satellite` method in `/SatDomain/Integration/Satellite/Methods` with the code from link:https://www.opentlc.com/download/cf_customization_4.5/scripts/register_satellite.rb["register_satellite.rb^"].
-+
-[IMPORTANT]
-Do not copy the code you see below--use the code from the previous link. The code below is just a snippet and description of what it does.
-+
 [NOTE]
 Satellite Registration using the API can be done via Ansible, but you use Ruby for this example.
 
