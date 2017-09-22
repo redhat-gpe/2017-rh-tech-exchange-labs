@@ -14,7 +14,7 @@
 === Clean Up Lab Environment
 
 . Verify your provider authentication status by navigating to *Compute > Infrastructure > Providers > SELECT PROVIDER*.  View the *Default Credentials* field.
-. If *Invalid*, select *Authentication > Re-check Authentication Status*..
+. If *Invalid*, select *Authentication > Re-check Authentication Status*.
 +
 [WARNING]
 You must verify provider authentication status every time you start your environment. If your providers are not properly authenticated, some of the labs will hang and you will have to start over.
