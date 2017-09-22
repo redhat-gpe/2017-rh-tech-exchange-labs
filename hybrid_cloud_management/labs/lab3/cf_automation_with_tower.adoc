@@ -13,7 +13,7 @@
 
 === Clean Up Lab Environment
 
-. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
+. Log in as the `admin` user with password `r3dh4t1!` to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
 +
 [NOTE]
 Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
@@ -135,7 +135,7 @@ This probes CloudForms for a list of hosts and provides an inventory.
 
 === Manage Job Templates in CloudForms
 
-. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
+. Log in as the `admin` user with password `r3dh4t1!` to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
 +
 [NOTE]
 Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
@@ -286,7 +286,7 @@ You also add an `ActivateSatellite` state to launch an Ansible playbook via Ansi
 
 Both of these stages must be added at some point after the VM is provisioned.
 
-. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
+. Log in as the `admin` user with password `r3dh4t1!` to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
 +
 [NOTE]
 Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
