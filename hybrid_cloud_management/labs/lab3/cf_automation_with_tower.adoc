@@ -13,6 +13,11 @@
 
 === Clean Up Lab Environment
 
+. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
+
 . Verify your provider authentication status by navigating to *Compute > Infrastructure > Providers > SELECT PROVIDER*.  View the *Default Credentials* field.
 . If *Invalid*, select *Authentication > Re-check Authentication Status*.
 +
@@ -22,7 +27,7 @@ You must verify provider authentication status every time you start your environ
 === Download the SSH Key and Test the SSH Connection
 
 . You will need an SSH key in order to access your workstation environment.
-.. Change directories to wherever you wish to store your Tech Exchange SSH Key.
+.. On your personal laptop, change directories to wherever you wish to store your Tech Exchange SSH Key.
 .. Run the command `wget http://bit.ly/rhte-na-labkey`.
 .. Run the command `chmod 0400 /path_to_key/rhte-na-labkey` to correct private key permissions.
 .. Test the connection via the command `ssh -i /path_to_key/rhte-na-labkey root@workstation-<GUID>.rhpds.opentlc.com`.  Be sure to substitute your GUID in the command.
@@ -130,7 +135,10 @@ This probes CloudForms for a list of hosts and provides an inventory.
 
 === Manage Job Templates in CloudForms
 
-. Log in to your CloudForms appliance as the `admin` user.
+. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
 
 . Navigate to *Automation -> Ansible Tower -> Explorer*.
 .. Select the *Providers* accordion.
@@ -277,6 +285,11 @@ From the CloudForms UI, make two additions to the `VMProvision_VM` state machine
 You also add an `ActivateSatellite` state to launch an Ansible playbook via Ansible Tower and an SSH that initiates the `subscription-manager` activation of the new system as a content host.
 
 Both of these stages must be added at some point after the VM is provisioned.
+
+. Log in as the admin user with password r3dh4t1! to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
 
 . Navigate to *Automation -> Automate -> Explorer*
 
