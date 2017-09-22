@@ -21,6 +21,13 @@ You must verify provider authentication status every time you start your environ
 . Delete any VMs in your environment to avoid issues with Ansible Tower license's VM limit.
 * Your Ansible Tower license allows for only 10 managed VMs.
 
+=== Download the SSH Key and Test the SSH Connection
+
+. You will need an SSH key in order to access your workstation environment.
+.. Change directories to wherever you wish to store your Tech Exchange SSH Key.
+.. Run the command `wget http://www.opentlc.com/rhte-na/labkey`.
+.. Test the connection via the command `ssh -i /path_to_key/labkey root@workstation-<GUID>.rhpds.opentlc.com`
+
 === Create Customization Template
 
 The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. In this section, you set up a working template.
@@ -531,6 +538,10 @@ Please do not change memory, CPU, or disk settings, as we are using a nested vir
 * *Address Mode*: `Static`
 * *Host Name*: `satlab.example.com`
 * *IP Address*: `192.168.1.150`
++
+[NOTE]
+Because of lack of DNS in the environment, the above IP address and network settings must be used.
++
 * *Subnet Mask*: `16`
 * *Gateway*: `192.168.0.2`
 * *DNS Server list*: `192.168.0.1`
@@ -643,9 +654,33 @@ my_extra_variable:
 
 === Provision the VM
 
-. Provision a Virtual Machine.
-.. Be sure to use a different IP address than the one used in the previous lab, or retire the satlab.example.com VM completely and reuse its IP address.
-.. Be sure to use an example.com suffix for the VM name to ensure that the Satellite registration completes successfully.
+. Navigate to *Compute -> Infrastructure -> Virtual Machines*.
+. Navigate to the *VMs* accordion.
+. Click *Lifecycle -> Provision VMs*.
+. Select the `rhel7-guest-image` template and click *Continue*.
+. Fill in your *E-Mail*
+. Fill in your *First Name*
+. Fill in your *Last Name*
+. Select the *Catalog* tab and enter `stretch.example.com` for *VM Name*.
+. Select the *Environment* tab and check the *Choose Automatically* box.
++
+[NOTE]
+Please do not change memory, CPU, or disk settings, as we are using a nested virtualization environment with limited resources.
++
+. Select the *Customize* tab, and enter or select the following:
+* *Root Password*: `r3dh4t1!`
+* *Address Mode*: `Static`
+* *Host Name*: `stretch.example.com`
+* *IP Address*: `192.168.1.151`
++
+[NOTE]
+Because of lack of DNS in the environment, the above IP address and network settings must be used.
++
+* *Subnet Mask*: `16`
+* *Gateway*: `192.168.0.2`
+* *DNS Server list*: `192.168.0.1`
+* *DNS Suffix list*: `example.com`
+* *Script Name*: `Red Hat Cloud Image Template`
 
 === Examine Outcome
 
