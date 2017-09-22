@@ -13,98 +13,18 @@
 
 === Clean Up Lab Environment
 
-. Verify your provider authentication status as described earlier in this course in the module 1 lab.
+. Verify your provider authentication status by navigating to *Compute > Infrastructure > Providers > SELECT PROVIDER > Authentication > Re-check Authentication Status*..
 +
 [WARNING]
 You must verify provider authentication status every time you start your environment. If your providers are not properly authenticated, some of the labs will hang and you will have to start over.
-
-. Delete any VMs in your environment to avoid issues with Ansible Tower license's VM limit.
-* Your Ansible Tower license allows for only 10 managed VMs.
 
 === Download the SSH Key and Test the SSH Connection
 
 . You will need an SSH key in order to access your workstation environment.
 .. Change directories to wherever you wish to store your Tech Exchange SSH Key.
-.. Run the command `wget http://www.opentlc.com/rhte-na/labkey`.
-.. Test the connection via the command `ssh -i /path_to_key/labkey root@workstation-<GUID>.rhpds.opentlc.com`
-
-=== Create Customization Template
-
-The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. In this section, you set up a working template.
-
-. Navigate to *Compute -> Infrastructure -> PXE*.
-
-. Select the *Customization Templates* accordion.
-
-. Navigate to *All Customization Templates -> System Image Types*.
-
-. Select *Configuration -> Add a New Customization Template*.
-.. Set *Name* to `Red Hat Cloud Image Template`.
-.. Set *Image Type* to `RHEL-6`.
-* Ignore the version number.  We are simply using a pre-created image type rather than creating our own.
-.. Set *Type* to `CloudInit`.
-.. Copy the text from link:https://www.opentlc.com/download/cf_customization_4.5/custom-provision.txt["custom-provision.txt^"].
-.. In the *Script* text box, paste the script you copied from `custom-provision.txt` in the previous step.
-.. Click *Add*.
-
-=== Fix Missing Ansible Tower Job Launcher
-
-In CloudForms 4.5 GA there is a deprecated `ConfigurationManagement` namespace that was replaced with `AutomationManagement`.
-
-The way to launch Ansible Tower jobs is to point to `/System/Request/ansible_tower_job`, which still calls `ConfigurationManagement`. The new namespace has all of the required code, but it is not wired up as of CloudForms 4.5 GA. In this section, you wire up the new namespace in the job launcher.
-
-. Navigate to *Automation -> Automate -> Explorer*.
-
-. Create a new domain called `SatDomain` and make sure that it is enabled.
-
-. Copy `/ManageIQ/System/Request/ansible_tower_job` to the `SatDomain` domain and keep the same path.
-
-. Edit the instance you just copied.
-
-. In *(rel4)*, change the text `ConfigurationManagement` to `AutomationManagement` and click *Save*.
-
-=== Fix CloudForms Inventory Script
-
-As of CloudForms 4.5 GA, the out-of-the-box inventory script returns the first IP address that CloudForms is aware of. Sometimes, however, this IP address is an `ipv6` IP address, and Ansible Tower currently does not work well with `ipv6`. A modified CloudForms inventory script is available that ignores `ipv6` addresses when inventory is generated.
-
-. From the workstation, as the `root` user, use SSH to access the `ansible1` host:
-+
-[source,text]
-----
-[root@workstation ~]# ssh ansible1.example.com
-Last login: ... from workstation-...rhpds.opentlc.com
-[root@ansible1 ~]#
-----
-
-. Change to the Ansible Tower inventory directory:
-+
-[source,text]
-----
-[root@ansible1 ~]# cd /var/lib/awx/venv/tower/lib/python2.7/site-packages/awx/plugins/inventory
-[root@ansible1 inventory]#
-----
-
-. Back up the existing Python script:
-+
-[source,text]
-----
-[root@ansible1 inventory]# mv cloudforms.py cloudforms.py.orig
-----
-
-. Retrieve the updated script from GitHub:
-+
-[source,text]
-----
-[root@ansible1 inventory]# wget https://raw.githubusercontent.com/redhat-gpe/cf_customization_public/master/inventory/cloudforms.py
-----
-
-. Clean up permissions for the downloaded file:
-+
-[source,text]
-----
-[root@ansible1 inventory]# chown awx:awx cloudforms.py;chmod +x cloudforms.py
-----
-
+.. Run the command `wget http://bit.ly/rhte-na-labkey`.
+.. Run the command `chmod 0400 /path_to_key/rhte-na-labkey` to correct private key permissions.
+.. Test the connection via the command `ssh -i /path_to_key/rhte-na-labkey root@workstation-<GUID>.rhpds.opentlc.com`
 
 == Setup Tower for Job Template Execution via CloudForms
 
@@ -548,6 +468,10 @@ Because of lack of DNS in the environment, the above IP address and network sett
 * *DNS Suffix list*: `example.com`
 * *Script Name*: `Red Hat Cloud Image Template`
 +
+[NOTE]
+The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. The Red Hat Cloud Image Template is a custom one that fixes the broken GA cloud-init script.
++
++
 [IMPORTANT]
 Make sure you use the requested FQDN in the VM host name so that the Puppet master can auto-sign the certificate later.
 +
@@ -681,6 +605,10 @@ Because of lack of DNS in the environment, the above IP address and network sett
 * *DNS Server list*: `192.168.0.1`
 * *DNS Suffix list*: `example.com`
 * *Script Name*: `Red Hat Cloud Image Template`
++
+[NOTE]
+The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. The Red Hat Cloud Image Template is a custom one that fixes the broken GA cloud-init script.
++
 
 === Examine Outcome
 
