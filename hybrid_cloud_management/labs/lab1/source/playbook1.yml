@@ -33,12 +33,12 @@
   - block:
     - name: test html page
       copy:
-        content: "Welcome to the example.com intranet!\n"
+        content: "Hello World, I was configured using Ansible!\n"
         dest: /var/www/html/index.html
 - name: test
   hosts: ansible1.example.com 
   tasks:
-  - name: connect to intranet
+  - name: connect to webserver
     uri:
       url: http://workstation.example.com
       status_code: 200

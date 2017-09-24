@@ -93,31 +93,31 @@ Verify each provider's status following _every_ lab environment shutdown.
 . From there, log in to the *ansible1.example.com* host
 +
 ----
-ssh root@ansible1.example.com
+$ ssh root@ansible1.example.com
 ----
 
 . Clone the Tech Exchange repository from https://github.com/redhat-gpe/rhte-na.git
 +
 ----
-git clone https://github.com/redhat-gpe/rhte-na.git
+$ git clone https://github.com/redhat-gpe/rhte-na.git
 ----
 
 . Change directory to rhte-na/hybrid_cloud_management/labs/lab1
 +
 ----
-cd /root/rhte/na/hybrid_cloud_management/labs/lab1
+$ cd /root/rhte_na/hybrid_cloud_management/labs/lab1/source
 ----
 
-. View *playbook1* within this directory. The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
+. View *playbook1.yml* within this directory. The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
 +
 If you notice, the last piece of the playbook is to test that you get a *200* response from the webserver from a different machine.
 +
 The first play in the playbook runs on the *workstation.example.com* host while the second runs from ansible1.example.com.
 
-. Run the *playbook1* playbook.
+. Run the *playbook1.yml* playbook.
 +
 ----
-ansible-playbook -i inventory playbook1.yml
+$ ansible-playbook -i inventory playbook1.yml
 ----
 +
 Analyze the run log and view the output.
@@ -125,16 +125,16 @@ Analyze the run log and view the output.
 [NOTE]
 This output is not verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
 
-. Run the *cleanup1* playbook.
+. Run the *cleanup1.yml* playbook.
 +
 ----
-ansible-playbook -i inventory cleanup1.yml
+$ ansible-playbook -i inventory cleanup1.yml
 ----
 
 . Switch to the roles directory under the current directory
 +
 ----
-cd roles
+$ cd roles
 ----
 
 . Browse the roles directory, specifically the webserver role directory.
@@ -148,24 +148,24 @@ The webserver role provides an example of an ansible role layout. In the tasks f
 . Open and view playbook2.
 +
 ----
-cd /root/rhte-na/hybrid_cloud_management/labs/lab1
-less playbook2.yml
+$ cd /root/rhte-na/hybrid_cloud_management/labs/lab1
+$ less playbook2.yml
 ----
 +
-This playbook is far simpler than *playbook1* but performs the same function.
+This playbook is far simpler than *playbook1.yml* but performs the same function.
 +
 Notice how the webserver role is included.
 
-. Run the *playbook2* playbook.
+. Run the *playbook2.yml* playbook.
 +
 ----
-ansible-playbook -i inventory playbook2.yml
+$ ansible-playbook -i inventory playbook2.yml
 ----
 
 . Run the same step a second time. On the second run though you should notice that all of the steps are labeled as **completed**.
 +
 ----
-ansible-playbook -i inventory playbook2.yml
+$ ansible-playbook -i inventory playbook2.yml
 ----
 
 . Modify the playbook to set a variable for the role to use.
@@ -183,6 +183,7 @@ Add the following lines:
 . Run the *playbook2.yml* playbook again and observe the change that takes place.
 +
 ----
-ansible-playbook -i inventory playbook2.yml
+$ ansible-playbook -i inventory playbook2.yml
 ----
 
+. Create a new playbook named *playbook3.yml* to create a file. Use the previous playbooks as well as the included module documentation for reference. The file should be called *hello_ansible.txt* located in */home/consultant*. The content of the file should be *"Hello World, from Ansible." This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com*. 
