@@ -110,9 +110,9 @@ $ cd /root/rhte_na/hybrid_cloud_management/labs/lab1/source
 
 . View *playbook1.yml* within this directory. The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
 +
-If you notice, the last piece of the playbook is to test that you get a *200* response from the webserver from a different machine.
+If you notice, the last piece of the playbook is to test that you get a *200* response to the webserver from a different machine.
 +
-The first play in the playbook runs on the *workstation.example.com* host while the second runs from ansible1.example.com.
+The first play in the playbook runs on the `workstation.example.com` host while the second runs from `ansible1.example.com`.
 
 . Run the *playbook1.yml* playbook.
 +
@@ -125,10 +125,10 @@ Analyze the run log and view the output.
 [NOTE]
 This output is not verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
 
-. Run the *cleanup1.yml* playbook.
+. Run the *cleanup.yml* playbook.
 +
 ----
-$ ansible-playbook -i inventory cleanup1.yml
+$ ansible-playbook -i inventory cleanup.yml
 ----
 
 . Switch to the roles directory under the current directory
