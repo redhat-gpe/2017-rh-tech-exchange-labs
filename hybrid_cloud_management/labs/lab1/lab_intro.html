@@ -1,0 +1,586 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+    "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="generator" content="AsciiDoc 8.4.5" />
+<title></title>
+<style type="text/css">
+/* Debug borders */
+p, li, dt, dd, div, pre, h1, h2, h3, h4, h5, h6 {
+/*
+  border: 1px solid red;
+*/
+}
+
+body {
+  margin: 1em 5% 1em 5%;
+}
+
+a {
+  color: blue;
+  text-decoration: underline;
+}
+a:visited {
+  color: fuchsia;
+}
+
+em {
+  font-style: italic;
+  color: navy;
+}
+
+strong {
+  font-weight: bold;
+  color: #083194;
+}
+
+tt {
+  color: navy;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #527bbd;
+  font-family: sans-serif;
+  margin-top: 1.2em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+h1, h2, h3 {
+  border-bottom: 2px solid silver;
+}
+h2 {
+  padding-top: 0.5em;
+}
+h3 {
+  float: left;
+}
+h3 + * {
+  clear: left;
+}
+
+div.sectionbody {
+  font-family: serif;
+  margin-left: 0;
+}
+
+hr {
+  border: 1px solid silver;
+}
+
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+ul, ol, li > p {
+  margin-top: 0;
+}
+
+pre {
+  padding: 0;
+  margin: 0;
+}
+
+span#author {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+span#email {
+}
+span#revnumber, span#revdate, span#revremark {
+  font-family: sans-serif;
+}
+
+div#footer {
+  font-family: sans-serif;
+  font-size: small;
+  border-top: 2px solid silver;
+  padding-top: 0.5em;
+  margin-top: 4.0em;
+}
+div#footer-text {
+  float: left;
+  padding-bottom: 0.5em;
+}
+div#footer-badges {
+  float: right;
+  padding-bottom: 0.5em;
+}
+
+div#preamble {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.tableblock, div.imageblock, div.exampleblock, div.verseblock,
+div.quoteblock, div.literalblock, div.listingblock, div.sidebarblock,
+div.admonitionblock {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
+div.admonitionblock {
+  margin-top: 2.5em;
+  margin-bottom: 2.5em;
+}
+
+div.content { /* Block element content. */
+  padding: 0;
+}
+
+/* Block element titles. */
+div.title, caption.title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: left;
+  margin-top: 1.0em;
+  margin-bottom: 0.5em;
+}
+div.title + * {
+  margin-top: 0;
+}
+
+td div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content div.title:first-child {
+  margin-top: 0.0em;
+}
+div.content + div.title {
+  margin-top: 0.0em;
+}
+
+div.sidebarblock > div.content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+
+div.listingblock > div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock {
+  padding-left: 2.0em;
+  margin-right: 10%;
+}
+div.quoteblock > div.attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock {
+  padding-left: 2.0em;
+  margin-right: 10%;
+}
+div.verseblock > div.content {
+  white-space: pre;
+}
+div.verseblock > div.attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+/* DEPRECATED: Pre version 8.2.7 verse style literal block. */
+div.verseblock + div.attribution {
+  text-align: left;
+}
+
+div.admonitionblock .icon {
+  vertical-align: top;
+  font-size: 1.1em;
+  font-weight: bold;
+  text-decoration: underline;
+  color: #527bbd;
+  padding-right: 0.5em;
+}
+div.admonitionblock td.content {
+  padding-left: 0.5em;
+  border-left: 2px solid silver;
+}
+
+div.exampleblock > div.content {
+  border-left: 2px solid silver;
+  padding: 0.5em;
+}
+
+div.imageblock div.content { padding-left: 0; }
+span.image img { border-style: none; }
+a.image:visited { color: white; }
+
+dl {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+dt {
+  margin-top: 0.5em;
+  margin-bottom: 0;
+  font-style: normal;
+  color: navy;
+}
+dd > *:first-child {
+  margin-top: 0.1em;
+}
+
+ul, ol {
+    list-style-position: outside;
+}
+ol.arabic {
+  list-style-type: decimal;
+}
+ol.loweralpha {
+  list-style-type: lower-alpha;
+}
+ol.upperalpha {
+  list-style-type: upper-alpha;
+}
+ol.lowerroman {
+  list-style-type: lower-roman;
+}
+ol.upperroman {
+  list-style-type: upper-roman;
+}
+
+div.compact ul, div.compact ol,
+div.compact p, div.compact p,
+div.compact div, div.compact div {
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+}
+
+div.tableblock > table {
+  border: 3px solid #527bbd;
+}
+thead {
+  font-family: sans-serif;
+  font-weight: bold;
+}
+tfoot {
+  font-weight: bold;
+}
+td > div.verse {
+  white-space: pre;
+}
+p.table {
+  margin-top: 0;
+}
+/* Because the table frame attribute is overriden by CSS in most browsers. */
+div.tableblock > table[frame="void"] {
+  border-style: none;
+}
+div.tableblock > table[frame="hsides"] {
+  border-left-style: none;
+  border-right-style: none;
+}
+div.tableblock > table[frame="vsides"] {
+  border-top-style: none;
+  border-bottom-style: none;
+}
+
+
+div.hdlist {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+div.hdlist tr {
+  padding-bottom: 15px;
+}
+dt.hdlist1.strong, td.hdlist1.strong {
+  font-weight: bold;
+}
+td.hdlist1 {
+  vertical-align: top;
+  font-style: normal;
+  padding-right: 0.8em;
+  color: navy;
+}
+td.hdlist2 {
+  vertical-align: top;
+}
+div.hdlist.compact tr {
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.comment {
+  background: yellow;
+}
+
+@media print {
+  div#footer-badges { display: none; }
+}
+
+div#toctitle {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 1.0em;
+  margin-bottom: 0.1em;
+}
+
+div.toclevel1, div.toclevel2, div.toclevel3, div.toclevel4 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+div.toclevel2 {
+  margin-left: 2em;
+  font-size: 0.9em;
+}
+div.toclevel3 {
+  margin-left: 4em;
+  font-size: 0.9em;
+}
+div.toclevel4 {
+  margin-left: 6em;
+  font-size: 0.9em;
+}
+/* Workarounds for IE6's broken and incomplete CSS2. */
+
+div.sidebar-content {
+  background: #ffffee;
+  border: 1px solid silver;
+  padding: 0.5em;
+}
+div.sidebar-title, div.image-title {
+  color: #527bbd;
+  font-family: sans-serif;
+  font-weight: bold;
+  margin-top: 0.0em;
+  margin-bottom: 0.5em;
+}
+
+div.listingblock div.content {
+  border: 1px solid silver;
+  background: #f4f4f4;
+  padding: 0.5em;
+}
+
+div.quoteblock-attribution {
+  padding-top: 0.5em;
+  text-align: right;
+}
+
+div.verseblock-content {
+  white-space: pre;
+}
+div.verseblock-attribution {
+  padding-top: 0.75em;
+  text-align: left;
+}
+
+div.exampleblock-content {
+  border-left: 2px solid silver;
+  padding-left: 0.5em;
+}
+
+/* IE6 sets dynamically generated links as visited. */
+div#toc a:visited { color: blue; }
+</style>
+</head>
+<body>
+<div id="header">
+</div>
+<h2 id="_introduction_to_lab">Introduction to Lab</h2>
+<div class="sectionbody">
+</div>
+<h2 id="_access_lab_environment">2. Access Lab Environment</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Your CloudForms Customization lab environment contains the following:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+Student workstation
+</p>
+</li>
+<li>
+<p>
+CloudForms appliance
+</p>
+</li>
+<li>
+<p>
+Red Hat Virtualization Manager
+</p>
+</li>
+<li>
+<p>
+Red Hat Enterprise Linux + KVM host
+</p>
+</li>
+<li>
+<p>
+VMware vSphere + 2 ESXi hosts
+</p>
+</li>
+<li>
+<p>
+Red Hat Satellite
+</p>
+</li>
+<li>
+<p>
+Ansible Tower by Red Hat
+</p>
+</li>
+<li>
+<p>
+Infoblox IPAM appliance
+</p>
+</li>
+</ul></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">The CloudForms appliance is fully configured with all of the above providers.</td>
+</tr></table>
+</div>
+<h3 id="_access_lab_workstation">2.1. Access Lab Workstation</h3><div style="clear:left"></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+</p>
+<div class="olist loweralpha"><ol class="loweralpha">
+<li>
+<p>
+For macOS and Linux users, execute the following:
+</p>
+<div class="listingblock">
+<div class="content"></div></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Replace <tt>$GUID</tt> with your lab environment GUID provided in the provisioning email you received when ordering.  Replace <tt>your-opentlc-sso-login</tt> with your OPENTLC SSO user name.</td>
+</tr></table>
+</div>
+</li>
+<li>
+<p>
+For Windows users, consult <a href="https://www.opentlc.com/ssh.html">this page^</a> for documentation on using PuTTY.
+</p>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.</td>
+</tr></table>
+</div>
+</li>
+</ol></div>
+</li>
+<li>
+<p>
+After logging in, make sure you can become <tt>root</tt> on the lab workstation:
+</p>
+<div class="listingblock">
+<div class="content"></div></div>
+</li>
+</ol></div>
+<h3 id="_access_red_hat_enterprise_virtualization_console_with_macos">2.2. Access Red Hat Enterprise Virtualization Console with macOS</h3><div style="clear:left"></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">Red Hat Enterprise Virtualization does not support macOS for VM console access. See <a href="https://access.redhat.com/solutions/93613">this page^</a> for unsupported steps on obtaining console access for macOS.</td>
+</tr></table>
+</div>
+<h3 id="_verify_provider_authentication_status">2.3. Verify Provider Authentication Status</h3><div style="clear:left"></div>
+<div class="paragraph"><p>When the CloudForms appliance and providers are down for any period of time (stopped overnight or initially provisioned in the lab environment) they lose connection to each other. CloudForms does not immediately re-establish connectivity. Every time you start your lab environment you must re-establish the communication between CloudForms and your providers. The appliance does attempt to reconnect at some point, but it may take hours, so it is best to follow the procedure below to get things running sooner.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">If you do not do this every time you start your environment, some of the labs will hang and you will have to start over.</td>
+</tr></table>
+</div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Log in to your CloudForms appliance at <tt>https://cf-$GUID.rhpds.opentlc.com</tt> as the <tt>admin</tt> user with the <tt>r3dh4t1!</tt> password.
+</p>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">Replace <tt>$GUID</tt> with the GUID provided to you in the email you received from the OPENTLC lab system.</td>
+</tr></table>
+</div>
+</li>
+<li>
+<p>
+Navigate to <strong>Compute &#8594; Infrastructure &#8594; Providers</strong>.
+</p>
+</li>
+<li>
+<p>
+Make sure all of your providers have <span class="image">
+<img src="images/greencheck.png" alt="images/greencheck.png" />
+</span> in the status quadrant as shown here:
+</p>
+<div class="imageblock">
+<div class="content">
+<img src="images/goodproviders.png" alt="images/goodproviders.png" />
+</div>
+</div>
+</li>
+<li>
+<p>
+If your providers do not have a <span class="image">
+<img src="images/greencheck.png" alt="images/greencheck.png" />
+</span>, you must re-check authentication status:
+</p>
+<div class="olist loweralpha"><ol class="loweralpha">
+<li>
+<p>
+Click the provider and select <strong>Authentication &#8594; Re-check Authentication Status</strong>:
+</p>
+<div class="imageblock">
+<div class="content">
+<img src="images/recheck.png" alt="images/recheck.png" />
+</div>
+</div>
+</li>
+</ol></div>
+</li>
+<li>
+<p>
+Select <strong>Compute &#8594; Infrastructure &#8594; Providers</strong> repeatedly until the provider&#8217;s status is <span class="image">
+<img src="images/greencheck.png" alt="images/greencheck.png" />
+</span>.
+</p>
+</li>
+<li>
+<p>
+Repeat this procedure for both Red Hat Virtualization and vSphere providers.
+</p>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">Verify each provider&#8217;s status following <em>every</em> lab environment shutdown.</td>
+</tr></table>
+</div>
+</li>
+</ol></div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2017-09-27 12:30:25 EDT
+</div>
+</div>
+</body>
+</html>
