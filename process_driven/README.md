@@ -1,1 +1,1 @@
-Labs for the process driven track.
+Lab instructions for the process driven track.
