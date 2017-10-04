@@ -1,0 +1,76 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+= Private Cloud Adoption - Lab 2
+
+:numbered:
+
+== Lab 2 Overivew
+Using the same environment from lab 1, create a second tenant via Ansible playbooks. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly with significant points reduced.
+
+Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
+
+== Access to Lab Environment
+
+Your OpenStack lab environment contains the following:
+
+* Workstation:
+* Controller:
+* Compute1:
+* Compute2:
+* Horizon URL:
+* username: admin
+* password: 
+* external network:
+* external subnet:
+* external floating ip pool:
+
+=== References
+The following resources will be helpful in the labs that follow:
+
+* http://docs.ansible.com/ansible/latest/list_of_cloud_modules.html
+* https://docs.openstack.org/horizon/pike/user/
+* https://docs.openstack.org/python-openstackclient/latest/
+* Example playbook using pure API calls: https://github.com/vvaldez/ansible-openstack-api
+
+=== Access Lab Workstation
+
+. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+----
++
+[NOTE]
+Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
++
+[IMPORTANT]
+To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
+
+. After logging in, make sure you can become `root` on the lab workstation:
++
+[source,text]
+----
+$ sudo -i
+#
+----
+
+== Lab Goals
+. Configure tenant 1 via Horizon UI
+. Upload the latest RHEL guest image into the Image service
+. Add custom security group called “Advanced_Ansible_Lab”
+. Enable Ingress ports for icmp, SSH, and whatever is required by your application
+. Create a network called “Advanced_Ansible_Lab”
+. Create a subnet called “Advanced_Ansible_Lab”
+. Create a router called “Advanced_Ansible_Lab” that connects your network to the public network (which has already been created for you) 
+.  Boot a test server
+. Assign a Floating IP to this server
+. Verify you can ping and SSH to this server from outside the OpenStack environment
+. Create a volume and attach it to this server
+. Ensure this volume is visible in the server

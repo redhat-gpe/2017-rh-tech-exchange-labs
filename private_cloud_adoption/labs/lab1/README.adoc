@@ -1,0 +1,75 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+= Private Cloud Adoption - Lab 1
+
+:numbered:
+
+== Lab 1 Overivew
+In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use a developer. This first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner.
+
+TIP: If you are already familiar with this process you may skip the instructions and do this on your own. As a bonus, you may alternatively write a bash script instead of using the Horizon UI.
+
+== Access to Lab Environment
+
+Your OpenStack lab environment contains the following:
+
+* Workstation:
+* Controller:
+* Compute1:
+* Compute2:
+* Horizon URL:
+* username: admin
+* password: 
+* external network:
+* external subnet:
+* external floating ip pool:
+
+=== References
+The following resources will be helpful in the labs that follow:
+
+* https://docs.openstack.org/horizon/pike/user/
+* https://docs.openstack.org/python-openstackclient/latest/
+
+=== Access Lab Workstation
+
+. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+----
++
+[NOTE]
+Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
++
+[IMPORTANT]
+To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
+
+. After logging in, make sure you can become `root` on the lab workstation:
++
+[source,text]
+----
+$ sudo -i
+#
+----
+
+== Lab Goals
+. Configure external network
+. Configure tenant 1 via Horizon UI
+. Upload the latest RHEL guest image into the Image service
+. Add custom security group called “Advanced_Ansible_Lab”
+. Enable Ingress ports for icmp, SSH, and whatever is required by your application
+. Create a network called “Advanced_Ansible_Lab”
+. Create a subnet called “Advanced_Ansible_Lab”
+. Create a router called “Advanced_Ansible_Lab” that connects your network to the public network (which has already been created for you) 
+.  Boot a test server
+. Assign a Floating IP to this server
+. Verify you can ping and SSH to this server from outside the OpenStack environment
+. Create a volume and attach it to this server
+. Ensure this volume is visible in the server
