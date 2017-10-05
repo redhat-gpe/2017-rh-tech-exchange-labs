@@ -1,0 +1,412 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+
+== Lab 1
+
+:numbered:
+
+
+== Access Lab Environment
+
+Your CloudForms Customization lab environment contains the following:
+
+* Student workstation
+* CloudForms appliance
+* Red Hat Virtualization Manager
+* Red Hat Enterprise Linux + KVM host
+* VMware vSphere + 2 ESXi hosts
+* Red Hat Satellite
+* Ansible Tower by Red Hat
+* Infoblox IPAM appliance
+
+[IMPORTANT]
+The CloudForms appliance is fully configured with all of the above providers.
+
+=== Access Lab Workstation
+
+. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+----
++
+[NOTE]
+Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
++
+[IMPORTANT]
+To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
+
+. After logging in, make sure you can become `root` on the lab workstation:
++
+[source,text]
+----
+$ sudo -i
+#
+----
+
+=== Access Red Hat Enterprise Virtualization Console with macOS
+
+[IMPORTANT]
+Red Hat Enterprise Virtualization does not support macOS for VM console access. See link:https://access.redhat.com/solutions/93613[this page^] for unsupported steps on obtaining console access for macOS.
+
+=== Verify Provider Authentication Status
+
+When the CloudForms appliance and providers are down for any period of time (stopped overnight or initially provisioned in the lab environment) they lose connection to each other. CloudForms does not immediately re-establish connectivity. Every time you start your lab environment you must re-establish the communication between CloudForms and your providers. The appliance does attempt to reconnect at some point, but it may take hours, so it is best to follow the procedure below to get things running sooner.
+
+[WARNING]
+If you do not do this every time you start your environment, some of the labs will hang and you will have to start over.
+
+. Log in to your CloudForms appliance at `https://cf-$GUID.rhpds.opentlc.com` as the `admin` user with the `r3dh4t1!` password.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the email you received from the OPENTLC lab system.
+
+. Navigate to *Compute -> Infrastructure -> Providers*.
+
+. Make sure all of your providers have image:images/greencheck.png[] in the status quadrant as shown here:
++
+image::images/goodproviders.png[]
+
+. If your providers do not have a image:images/greencheck.png[], you must re-check authentication status:
+.. Click the provider and select *Authentication -> Re-check Authentication Status*:
++
+image::images/recheck.png[]
+
+. Select *Compute -> Infrastructure -> Providers* repeatedly until the provider's status is image:images/greencheck.png[].
+
+. Repeat this procedure for both Red Hat Virtualization and vSphere providers.
++
+[IMPORTANT]
+Verify each provider's status following _every_ lab environment shutdown.
+
+== Lab 1 Instructions
+
+. Log on to your workstation machine as previously described.
+
+. From there, log in to the *ansible1.example.com* host
++
+----
+$ ssh root@ansible1.example.com
+----
+
+. Clone the Tech Exchange repository from https://github.com/redhat-gpe/rhte-na.git
++
+----
+$ git clone https://github.com/redhat-gpe/rhte-na.git
+----
+
+. Change directory to rhte-na/hybrid_cloud_management/labs/lab1
++
+----
+$ cd /root/rhte-na/hybrid_cloud_management/labs/lab1/source
+----
+
+. View *playbook1.yml* within this directory.
++
+The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
++
+If you notice, the last piece of the playbook is to test that you get a *200* response to the webserver from a different machine.
++
+The first play in the playbook runs on the `workstation.example.com` host while the second runs from `ansible1.example.com`.
+
+.. The first line of the /root/rhte_na/hybrid_cloud_management/labs/lab1/source/playbook1.yml is to start the YAML file.
++
+----
+---
+----
+
+.. The following line is to denote the start of a play with a name of `Web Server Install`
++
+----
+- name: Web Server Install
+----
+
+.. The following line indicates that the play applies to the `workstation.example.com` managed host. The indentation indicates that this line is belongs to the play.
++
+----
+  hosts: worsktation.example.com
+----
+
+.. The following line is to enable privilege escalation for this play.
++
+----
+  become: yes
+----
+
+.. The following line indicates the beginning of the list of tasks that the play contains.
++
+----
+  tasks:
+----
+
+.. The following line creates a new block for the tasks of installing that the latest versions of the necessary packages. As you'll see from the indentation, the block is contained within the tasks list.
++
+----
+  - block:
+----
+
+.. The following line creates the task for ensuring that the latest version of the httpd package is installed. Be aware of the indentation which indicates that this task is part of the `block` of tasks.
++
+The first entry provides a descriptive name for the task. The second entry calls the *yum* module. The remaining entries pass the necessary arguments to ensure the latest version of the *httpd* package is installed.
++
+----
+    - name: latest httpd version installed
+      yum:
+        name: httpd
+        state: latest
+----
+
+.. The following line creates the task for ensuring that the latest version of the firewalld package is installed. Be aware of the indentation which indicates that this task is part of the `block` of tasks.
++
+The first entry provides a descriptive name for the task. The second entry calls the *yum* module. The remaining entries pass the necessary arguments to ensure the latest version of the *firewalld* package is installed.
++
+----
+    - name: latest firewalld version installed
+      yum:
+        name: firewalld
+        state: latest
+----
+
+.. The following code block creates a list of tasks to configure *firewalld*. The indentation indicates that the block is contained by the play and is an item in the *tasks* list.
++
+----
+  - block:
+----
+
+.. The following lines create the task to ensure *firewalld* opens HTTP service to remote systems.
++
+The first entry provides a descriptive name for the task. The second entry is indented within the block and calls the *firewalld* module. The remaining entries are indented to show they are arguments for *firewalld*. They ensure that access to the HTTP service is permanently allowed.
++
+----
+    - name: firewalld permits http service
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+----
+
+.. The following lines create a new block for service management tasks.
++
+----
+  - block:
+----
+
+.. The following creates a task to ensure the *httpd* service is enabled and running. The indentation indicates that the tasks belong to the service management block.
++
+The first entry provides a descriptive name for the task. The second entry is indented within the task and calls the *service* module. The remaining entries are arguments to ensure the httpd service is enabled and running.
++
+----
+    - name: httpd enabled and running
+      service:
+        name: httpd
+        enabled: true
+        state: started
+----
+
+.. The following lines create the task for ensuring that the *firewalld* service is enabled and running.
++
+The first entry provides a descriptive name for the task. The second entry is indented and calls the *service* module. The remaining entries are indented to show they are arguments to ensure that the firewalld service is enabled and started.
++
+----
+    - name: firewalld enabled and running
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+----
+
+.. The following line creates a new block for web content management tasks. The indentation indicates that the block is contained by the play and that it is an item in the tasks list.
++
+----
+  - block:
+----
+
+.. The following line creates a task for populating web content into `/var/www/html/index.html`.
++
+The first entry provides a descriptive name for the task. The second entry calls the *copy* module. The remaining entries pass the necessary arguments to populate the web content.
++
+----
+    - name: test html page
+      copy:
+        content: "Hello World, I was configured using Ansible!\n"
+        dest: /var/www/html/index.html
+----
+
+.. The next section of *playbook1.yml* creates a second play within the playbook. The play is named *test* and acts on the current machine: `ansible1.example.com`.
++
+The task it performs is to connect to the webserver created in the first play.
++
+The task uses the *uri* module and expects a *200* return code.
++
+----
+- name: test
+  hosts: ansible1.example.com
+  tasks:
+  - name: connect to webserver
+    uri:
+      url: http://workstation.example.com
+      status_code: 200
+----
+
+
+. Run the *playbook1.yml* playbook.
++
+----
+$ ansible-playbook -i inventory playbook1.yml
+----
++
+Analyze the run log and view the output.
++
+[NOTE]
+This output is not verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
+
+. Run the *cleanup.yml* playbook.
++
+----
+$ ansible-playbook -i inventory cleanup.yml
+----
+
+. Switch to the roles directory under the current directory
++
+----
+$ cd roles
+----
+
+. Browse the roles directory, specifically the webserver role directory.
++
+The roles directory has the webserver role as well as a requirements.yml file. We will not be using the requirements.yml file in the main portion of the lab.
++
+The webserver role provides an example of an ansible role layout. In the tasks folder is a task list for the role with the name *main.yml*.
+
+. Open and view playbook2.
++
+----
+$ cd /root/rhte-na/hybrid_cloud_management/labs/lab1
+$ cat playbook2.yml
+---
+- name: Install webserver using roles
+  hosts: workstation.example.com
+  become: yes
+  roles:
+    - { role: webserver }
+
+- name: Test for successful installation
+  hosts: ansible1.example.com
+  tasks:
+  - name: connect to webserver
+    uri:
+      url: http://workstation.example.com
+      status_code: 200
+----
++
+This playbook is far simpler than *playbook1.yml* but performs the same function.
++
+Notice how the *webserver* role is included.
+
+. Run the *playbook2.yml* playbook.
++
+----
+$ ansible-playbook -i inventory playbook2.yml
+----
+
+. Run the same step a second time. On the second run though you should notice that all of the steps are labeled as **ok** instead of **changed**.
++
+----
+$ ansible-playbook -i inventory playbook2.yml
+----
+
+. Modify the playbook to set a variable for the role to use.
++
+Add the following lines:
++
+[subs=+quotes]
+----
+- hosts
+  *vars:*
+     *body_content: "This page is now changed"*
+  roles:
+----
+
+. Run the *playbook2.yml* playbook again and observe the change that takes place.
++
+----
+$ ansible-playbook -i inventory playbook2.yml
+----
+
+. *Stretch Goal 1:* Create a new playbook named *playbook3.yml* to create a new user and place a file in the user's home directory.
++
+Use the previous playbooks as well as the included module documentation for reference. The user should be named *consultant1* and in a primary group of *consultants*. The home directory should be */home/consultant*. The file should be called *hello_ansible.txt* located in */home/consultant*. The content of the file should be `"Hello World, from Ansible."`
++
+This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com* but executed on *ansible1.example.com*.
+
+. *Stretch Goal:* Install Ansible Tower on *workstation.example.com*
+
+.. The installer is downloaded to `/root/ansible-tower-setup-3.1.3` on your *ansible1.example.com* host
+
+.. SSH into your *ansible1.example.com* host and switch to the /root/ansible-tower-setup-3.1.3 directory
++
+----
+$ ssh ansible1.example.com
+$ cd /root/ansible-tower-setup-3.1.3
+----
+
+.. Modify the inventory file to look like the following
++
+----
+[tower]
+workstation.example.com
+
+[database]
+
+[all:vars]
+admin_password='r3dh4t1!'
+
+pg_host=''
+pg_port=''
+
+pg_database='awx'
+pg_username='awx'
+pg_password='r3dh4t1!'
+
+rabbitmq_port=5672
+rabbitmq_vhost=tower
+rabbitmq_username=tower
+rabbitmq_password='r3dh4t1!'
+rabbitmq_cookie=cookiemonster
+
+# Needs to be true for fqdns and ip addresses
+rabbitmq_use_long_name=false
+----
++
+This configuration, through ran on the *ansible1.example.com* host, will run the installation on *workstation.example.com*.
+
+.. Run the installation script.
++
+This script runs an Ansible playbook with the inventory you just set up to install ansible on *workstation.exmaple.com*. The SSH key for *ansible1.example.com* was preconfigured to be a trusted authentication method on *workstation.example.com*.
++
+----
+$ ./setup.sh
+----
+
+.. SSH into the *workstation.example.com* host
+
+.. Open port http and https ports on the firewall configuration
++
+----
+$ firewall-cmd --permanent --add-service=http,https
+$ firewall-cmd --reload
+----
+
+.. On your personal machine, navigate your browser to your workstation's external DNS name `workstation-$GUID.rhpds.opentlc.com`
+
+.. You should see the Tower home screen, though you will not have a license for this lab.
++
+In the next lab you will work with and learn how to use and configure Ansible Tower.
