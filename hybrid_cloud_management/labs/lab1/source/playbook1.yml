@@ -1,6 +1,6 @@
 ---
 - name: Web Server Install
-  hosts: worsktation.example.com
+  hosts: workstation.example.com
   become: yes
   tasks:
   - block:
@@ -36,7 +36,7 @@
         content: "Hello World, I was configured using Ansible!\n"
         dest: /var/www/html/index.html
 - name: test
-  hosts: ansible1.example.com 
+  hosts: ansible1.example.com
   tasks:
   - name: connect to webserver
     uri:
