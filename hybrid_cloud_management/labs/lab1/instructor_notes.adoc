@@ -1,0 +1,59 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+== Ansible Lab Will Provide
+
+. Learn Ansible playbook development
+
+. Learn Ansible role development
+
+. Stretch goal of writing a playbook from scratch using Ansible documentation.
+
+. Stretch goal of installing Ansible Tower on your workstation
+
+== Ansible Lab Goal
+
+Learning the different styles of writing playbooks that perform the same function of installing a web server and understanding basic usage of the modules which they use. Then using that knowledge creating a playbook from scratch. Once you are done with the lab you should understand the flow of Ansible.
+
+
+= Intro to Ansible
+
+== Playbooks
+
+. Playbooks are the major Organizational unit which Ansible and Ansible Tower run.
+. They are separated into smaller components called plays.
+. A playbook can have one or more plays.
+. The format of a playbook file is YAML.
+
+== Play
+
+. Plays contain at a minimum a selection of host(s) that the play should run against.
+. The hosts can either be individual hosts, groups of hosts, or all hosts.
+. The hosts that are used in the play must be defined in the inventory.
+. Plays usually contain a list of tasks associated with the play though this is not always the case.
+. Sometimes a play may only contain a list of roles.
+
+== Roles
+
+. Roles are a collection of variables, files, templates, and tasks which will be run when the role is included in a play.
+. Roles have a special format with directory names that get parsed through when the role is included in a play.
+. The variable and task files are formatted in YAML format.
+
+----
+sample-role/
+     -> defaults/
+          main.yml
+     -> handlers/
+          main.yml
+     -> meta/
+          main.yml
+  README.md
+     -> tasks/
+          main.yml
+     -> tests/
+          main.yml
+     -> vars/
+          main.yml
+----
