@@ -16,19 +16,10 @@
         name: httpd
         enabled: false
         state: stopped
-    - name: firewalld enabled and running
-      service:
-        name: firewalld
-        enabled: false
-        state: stopped
   - block:
     - name: latest httpd version installed
       yum:
         name: httpd
-        state: absent
-    - name: latest firewalld version installed
-      yum:
-        name: firewalld
         state: absent
   - block:
     - name: test html page
