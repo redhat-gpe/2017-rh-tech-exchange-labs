@@ -1,6 +1,6 @@
 ---
 - name: Web Server Uninstall
-  hosts: worsktation.example.com
+  hosts: workstation.example.com
   become: yes
   tasks:
   - block:
@@ -14,7 +14,7 @@
     - name: httpd enabled and running
       service:
         name: httpd
-        enabled: false 
+        enabled: false
         state: stopped
     - name: firewalld enabled and running
       service:
