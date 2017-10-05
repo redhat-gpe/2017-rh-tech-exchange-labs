@@ -202,6 +202,8 @@ There is also a user named *consultant* with a password of *r3dh4t1!* which you 
 .. Navigate to Settings -> Configure Tower
 
 .. Navigate to the Sub Category *LDAP*
++
+image::images/ldap_config.png[]
 
 .. Set the LDAP SERVER URI to `ldap://ansible1.example.com:389`
 
