@@ -188,3 +188,67 @@ When prompted for extra variables, input the following YAML into the text box.
 ---
 body_content: "Hello from the extra vars!"
 ----
+
+. *Stretch Goal:* Configure LDAP Authentication
++
+There is a Red Hat Directory Server (RHDS) LDAP server configured on the *ansible1.example.com* host with a couple users created.
++
+One user is named *tower* with a password of *passw0rd* which you should use to configure as the BIND DN for Tower.
++
+There is also a user named *consultant* with a password of *r3dh4t1!* which you should be able to log in with System Administrator access in Tower. This user belongs to the *Consultants* group in LDAP.
+
+.. Log in to the Tower UI as admin.
+
+.. Navigate to Settings -> Configure Tower
+
+.. Navigate to the Sub Category *LDAP*
+
+.. Set the LDAP SERVER URI to `ldap://ansible1.example.com:389`
+
+.. Set the LDAP BIND DN to *tower*
+
+.. Set the LDAP BIND PASSWORD to *passw0rd*
+
+.. Set the LDAP GROUP TYPE to `GroupOfUniqueNames`
+
+.. Set LDAP USER SEARCH to the following in order to set the search DN, the scope, and the attribute which should be mapped to the username to sign in with.
++
+----
+[
+ "OU=People,DC=example,DC=com",
+ "SCOPE_SUBTREE",
+ "(uid=%(user)s)"
+]
+----
+
+.. Set LDAP GROUP SEARCH to the following in order to set the search DN to find the groups.
++
+----
+[
+ "OU=Groups,DC=example,DC=com",
+ "SCOPE_SUBTREE",
+ "(objectClass=group)"
+]
+----
+
+.. Set the LDAP USER ATTRIBUTE MAP to the following in order to map the LDAP attributes to the appropriate Tower parameters.
++
+----
+{
+ "first_name": "givenName",
+ "last_name": "sn",
+ "email": "mail"
+}
+----
+
+.. Set the LDAP USER FLAGS BY GROUP to the following in order to map the *Consultants* group to be "Super Users" which will function as System Administrator for the Tower. The users that belong to this group will have the same privilege as *admin*.
++
+----
+{
+"is_superuser": "cn=Consultants,ou=groups,dc=example,dc=com"
+}
+----
+
+. Log in to Tower first as the *tower* user with *passw0rd* as the password in order to see what Tower looks like without any privilege. This user is configured from LDAP. The password is configured in the LDAP server.
+
+. Log in to Tower as the *consultant* user with *r3dh4t1!* as the password. If the mapping worked you should see everything you were able to see as the *admin* user.
