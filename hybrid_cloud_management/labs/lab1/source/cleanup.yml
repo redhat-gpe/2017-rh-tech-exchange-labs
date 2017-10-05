@@ -34,4 +34,4 @@
     - name: test html page
       file:
         state: absent
-        src: /var/www/html/index.html
+        path: /var/www/html/index.html
