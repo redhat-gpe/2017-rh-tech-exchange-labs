@@ -1,0 +1,3 @@
+[lab]
+workstation.example.com	ansible_user=awxservice
+
