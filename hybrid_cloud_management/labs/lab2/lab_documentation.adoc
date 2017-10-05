@@ -87,11 +87,6 @@ Navigate to the *Projects* tab. Click *+Add*. Fill in the name as *Webserver Con
 +
 image::images/project_new_project.png[]
 
-
-
-[TODO]
-Add explanation of how projects get populated
-
 . Create a new credential named *Lab Machines*.
 +
 Navigate to the settings tab.
