@@ -348,7 +348,10 @@ Use the previous playbooks as well as the included module documentation for refe
 +
 This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com* but executed on *ansible1.example.com*.
 
-. *Stretch Goal:* Install Ansible Tower on *workstation.example.com*
+. *Stretch Goal 2:* Install Ansible Tower on *workstation.example.com*
++
+[WARNING]
+Before performing the stretch goal of installing Tower you must run the cleanup.yml playbook.
 
 .. The installer is downloaded to `/root/ansible-tower-setup-3.1.3` on your *ansible1.example.com* host
 
