@@ -1,3 +1,5 @@
 [lab]
 workstation.example.com	ansible_user=awxservice
 
+[tower]
+ansible1.example.com
