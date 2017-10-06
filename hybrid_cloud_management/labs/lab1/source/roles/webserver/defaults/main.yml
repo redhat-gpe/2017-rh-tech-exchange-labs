@@ -1,3 +1,3 @@
 ---
 # defaults file for webserver
-body_content: "Hello World, I was configured using Ansible!\n"
+body_content: "Hello World, I was configured using Ansible using the default value!\n"
