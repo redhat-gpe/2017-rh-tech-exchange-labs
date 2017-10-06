@@ -495,10 +495,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li>
 <p>In this High Availability environment, the OpenShift Master API service is accessed through the Load Balancer.  Find the proper hostname and port of the Master API from the ansible inventory file <code>openshift_master_cluster_hostname</code> and <code>openshift_master_api_port</code>, and put it in a shell variable for ease of use.</p>
+<p>Your Ansible Inventory file will not be the default <code>/etc/ansible/hosts</code>.  Set it to the proper file with the pid and timestamp at the end.</p>
 <div class="literalblock">
 <div class="content">
-<pre>MASTER_API_PORT=$(sed -n 's/openshift_master_api_port=//p' /etc/ansible/hosts || echo 8443)
-MASTER_API_HOSTPORT=$(sed -n 's/openshift_master_cluster_hostname=//p' /etc/ansible/hosts):${MASTER_API_PORT}</pre>
+<pre>cp /etc/ansible/hosts /etc/ansible/hosts_old
+cp /etc/ansible/hosts.* /etc/ansible/hosts
+export INVENTORY=$(ls /etc/ansible/hosts)
+export MASTER_API_PORT=$(sed -n 's/openshift_master_api_port=//p' ${INVENTORY} || echo 8443)
+export MASTER_API_HOSTPORT=$(sed -n 's/openshift_master_cluster_hostname=//p' ${INVENTORY} ):${MASTER_API_PORT}</pre>
 </div>
 </div>
 </li>
@@ -506,7 +510,7 @@ MASTER_API_HOSTPORT=$(sed -n 's/openshift_master_cluster_hostname=//p' /etc/ansi
 <p>Do the same for the Router on the first infrastructure node.  Note that the port number will always be 443.</p>
 <div class="literalblock">
 <div class="content">
-<pre>ROUTER=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' /etc/ansible/hosts):443</pre>
+<pre>export ROUTER=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' ${INVENTORY}:443</pre>
 </div>
 </div>
 </li>
@@ -735,7 +739,8 @@ master2.alb1.internal | SUCCESS | rc=0 &gt;&gt;
 <p>Note that the SIGNER of the OpenShift Master API has not changed:</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">echo QUIT | openssl s_client -connect ${MASTER_API_HOSTPORT} 2&gt;&amp;1 | less ----</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">echo QUIT | openssl s_client -connect ${MASTER_API_HOSTPORT} 2&gt;&amp;1 | less 
+</code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -923,17 +928,7 @@ Note that <strong>all</strong> of the certs associated with the Node processes a
 </li>
 <li>
 <p>allows the administrator to plan with the various teams separately for the very minor outages for the certificate replacement to occur in an orderly fashion.
-:scrollbar:
-:data-uri:
-:imagesdir: images
-:toc2:
-:opencf: <a href="https://labs.opentlc.com/">OPENTLC lab portal</a>
-:course_name: Red Hat OpenShift Operations
-:account_management: <a href="https://www.opentlc.com/account/">OPENTLC Account Management page</a>
-:catalog_name: OPENTLC Cloud Infrastructure
-:open_shared_ocp: <a href="https://master.na.openshift.opentlc.com/">OPENTLC OpenShift portal</a>
-:need_client: false
-:show_solution: true</p>
+</p>
 </li>
 </ol>
 </div>
@@ -965,7 +960,7 @@ Note that <strong>all</strong> of the certs associated with the Node processes a
 <p>In this High Availability environment, the OpenShift Master API service is accessed through the Load Balancer.  Find the proper hostname of the Load Balancer from the ansible inventory file <code>openshift_master_cluster_hostname</code>, and put it in a shell variable for ease of use. Use that value of the</p>
 <div class="literalblock">
 <div class="content">
-<pre>LB=$(sed -n 's/openshift_master_cluster_hostname=//p' /etc/ansible/hosts):443</pre>
+<pre>export LB=$(sed -n 's/openshift_master_cluster_hostname=//p' ${INVENTORY}):443</pre>
 </div>
 </div>
 </li>
@@ -973,7 +968,7 @@ Note that <strong>all</strong> of the certs associated with the Node processes a
 <p>Do the same for the Router on the first infrastructure node:</p>
 <div class="literalblock">
 <div class="content">
-<pre>INFRA1=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' /etc/ansible/hosts):443</pre>
+<pre>export INFRA1=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' /etc/ansible/hosts):443</pre>
 </div>
 </div>
 </li>
@@ -1054,7 +1049,7 @@ Note that the router has a different CA cert, and does NOT express any client CA
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">echo QUIT | openssl s_client -connect ${INFRA1}:443 2&gt;&amp;1</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">echo QUIT | openssl s_client -connect ${INFRA1}:443 2&gt;&amp;1 | less </code></pre>
 </div>
 </div>
 <div class="ulist">
@@ -1259,7 +1254,7 @@ Server Temp Key: ECDH, prime256v1, 256 bits</code></pre>
 <p>Set the host and port of the INFRA1 shell variable:</p>
 <div class="literalblock">
 <div class="content">
-<pre>INFRA1=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' /etc/ansible/hosts):443</pre>
+<pre>export INFRA1=$(perl -ne 's/^(infranode1\..*?\.internal).*$/$1/ and print and last' /etc/ansible/hosts):443</pre>
 </div>
 </div>
 </li>
@@ -1267,7 +1262,7 @@ Server Temp Key: ECDH, prime256v1, 256 bits</code></pre>
 <p>Run the OpenSSL tool:</p>
 <div class="literalblock">
 <div class="content">
-<pre>echo QUIT | openssl s_client -connect ${INFRA1} 2&gt;&amp;1</pre>
+<pre>echo QUIT | openssl s_client -connect ${INFRA1} 2&gt;&amp;1 | less</pre>
 </div>
 </div>
 </li>
