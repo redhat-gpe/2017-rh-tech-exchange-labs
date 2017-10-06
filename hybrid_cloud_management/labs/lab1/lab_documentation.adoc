@@ -387,7 +387,7 @@ rabbitmq_password='r3dh4t1!'
 rabbitmq_cookie=cookiemonster
 
 # Needs to be true for fqdns and ip addresses
-rabbitmq_use_long_name=false
+rabbitmq_use_long_name=true
 ----
 +
 This configuration, through ran on the *ansible1.example.com* host, will run the installation on *workstation.example.com*.
