@@ -463,7 +463,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_extra">7. Extra</a></li>
-<li><a href="#_validate_openshift_hosted_components">8. Validate OpenShift Hosted Components</a></li>
 </ul>
 </div>
 </div>
@@ -1637,63 +1636,6 @@ openshift_master_overwrite_named_certificates=true</code></pre>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_validate_openshift_hosted_components">8. Validate OpenShift Hosted Components</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Sometimes the various services deployed with OpenShift do not restart properly when their certificates and/or the CA certs are updated.  Examine all your running pods for errors, and scale them down and up to refresh them with their new certificates.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash"># oc get pods --all-namespaces
-NAMESPACE         NAME                          READY     STATUS    RESTARTS   AGE
-default           docker-registry-1-2wvkx       1/1       Running   1          2h
-default           docker-registry-1-wc48m       1/1       Running   2          2h
-default           registry-console-1-xd45z      1/1       Running   2          2h
-default           router-1-cxz21                1/1       Running   3          2h
-default           router-1-k3m4j                1/1       Running   2          2h
-logging           logging-curator-1-wp944       1/1       Running   0          8m
-logging           logging-es-6ofaq7ed-1-nsmxl   1/1       Running   0          9m
-logging           logging-fluentd-2ntp0         1/1       Running   1          2h
-logging           logging-fluentd-5vb79         1/1       Running   3          2h
-logging           logging-fluentd-6x8g2         1/1       Running   1          2h
-logging           logging-fluentd-87n72         1/1       Running   1          2h
-logging           logging-fluentd-8dtqb         1/1       Running   2          2h
-logging           logging-fluentd-n8lsj         1/1       Running   2          2h
-logging           logging-fluentd-sm8rs         1/1       Running   1          2h
-logging           logging-fluentd-tf107         1/1       Running   2          2h
-logging           logging-kibana-1-g24j2        2/2       Running   2          2h
-openshift-infra   hawkular-cassandra-1-r5dbd    1/1       Running   2          2h
-openshift-infra   hawkular-metrics-0b8rl        1/1       Running   1          2h
-openshift-infra   heapster-57ndb                0/1       Error     1          48s</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>[root@master1 master]# oc project openshift-infra
-Now using project "openshift-infra" on server "https://loadbalancer1.alb1.internal:443".
-[root@master1 master]# oc scale rc heapster --replicas=0
-replicationcontroller "heapster" scaled
-[root@master1 master]# oc get rc
-NAME                   DESIRED   CURRENT   READY     AGE
-hawkular-cassandra-1   1         1         1         2h
-hawkular-metrics       1         1         1         2h
-heapster               0         0         0         2h
-[root@master1 master]# oc scale rc heapster --replicas=1
-replicationcontroller "heapster" scaled
-[root@master1 master]# oc get pods
-NAME                         READY     STATUS    RESTARTS   AGE
-hawkular-cassandra-1-r5dbd   1/1       Running   2          2h
-hawkular-metrics-0b8rl       1/1       Running   1          2h
-heapster-57ndb               1/1       Running   0          2m
-[root@master1 master]#</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>Now move on to adding custom Named Certificates for your various components such as the Master (and Load Balancers,) Routers, and OpenShift hosted Registry.</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
 <div id="footer">
 <div id="footer-text">
 Last updated 2017-09-27 17:00:38 EDT

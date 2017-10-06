@@ -660,7 +660,7 @@ code { -webkit-border-radius: 4px; border-radius: 4px; }
 
 p.tableblock.header { color: #6d6e71; }</style><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/3.2.0/css/font-awesome.min.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/sunburst.min.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script><script>hljs.initHighlightingOnLoad()</script></head><body class="article toc2 toc-left"><div id="header"><div id="toc" class="toc2"><div id="toctitle">Table of Contents</div><ul class="sectlevel1">
 <li><a href="#_openshift_security_lab">OpenShift Security Lab</a></li>
-<li><a href="#_set_up_lab_environment">1. Set Up Lab Environment</a></li>
+<li><a href="#_connect_to_lab_environment">1. Connect to Lab Environment</a></li>
 <li><a href="#_configure_authentication_against_ipa_ldap_server">2. Configure Authentication Against IPA (LDAP) Server</a></li>
 <li>
 <ul class="sectlevel2">
@@ -713,12 +713,28 @@ p.tableblock.header { color: #6d6e71; }</style><link rel="stylesheet" href="http
 <div class="admonitionblock note"><table><tr><td class="icon"><i class="icon-note" title="Note"></i></td><td class="content">All user passwords are <code>r3dh4t1!</code>.</td></tr></table></div>
 <table class="tableblock frame-all grid-all" style="width:100%"><caption class="title">Portal Application Projects</caption><colgroup><col style="width:50%"><col style="width:50%"></colgroup><thead><tr><th class="tableblock halign-left valign-top">Project</th><th class="tableblock halign-left valign-top">Access Granted To</th></tr></thead><tbody><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>portalapp-dev</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>portalapp</code> group</p></td></tr><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>portalapp-test</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>portalapp</code> group</p></td></tr><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>portalapp-prod</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>ocp-production</code> group</p></td></tr></tbody></table>
 <table class="tableblock frame-all grid-all" style="width:100%"><caption class="title">Payment Application Projects</caption><colgroup><col style="width:50%"><col style="width:50%"></colgroup><thead><tr><th class="tableblock halign-left valign-top">Project</th><th class="tableblock halign-left valign-top">Access Granted To</th></tr></thead><tbody><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>paymentapp-dev</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>paymentapp</code> group</p></td></tr><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>paymentapp-test</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>paymentapp</code> group</p></td></tr><tr><td class="tableblock halign-left valign-top"><p class="tableblock"><code>paymentapp-prod</code></p></td><td class="tableblock halign-left valign-top"><p class="tableblock"><code>ocp-production</code> group</p></td></tr></tbody></table></div></div>
-<div class="sect1"><h2 id="_set_up_lab_environment">1. Set Up Lab Environment</h2><div class="sectionbody"><div class="paragraph"><p>In this section, you provision the environment required to complete the labs
- in the <em>Advanced Deployment with Red Hat OpenShift</em> training.</p></div>
-<div class="olist arabic"><ol class="arabic"><li><p>Navigate to the <a href="https://labs.opentlc.com/">OPENTLC lab portal</a>.</p></li><li><p>Log in to the portal using your OPENTLC credentials and select the
-<strong>OpenShift 3.5 Advanced FastAdv Lab</strong> to provision your environment.</p><div class="admonitionblock tip"><table><tr><td class="icon"><i class="icon-tip" title="Tip"></i></td><td class="content">If you need additional information, use the lab instructions in the first module.</td></tr></table></div></li></ol></div>
-<div class="admonitionblock note"><table><tr><td class="icon"><i class="icon-note" title="Note"></i></td><td class="content">The lab environment is cloud-based, so you can access it over the WAN from
- anywhere. However, do not expect its performance to match a bare-metal environment.</td></tr></table></div></div></div>
+
+<div class="sect1">
+<h2 id="_connect_to_lab_environment">1. Connect to Lab Environment</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this section, you use ssh and the private key to log into the environment required to complete the labs.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li><p> Download the key as detailed by your instructor and configure on your laptop.</p></li>
+<li><p> Connect to the bastion host as follows:</p></li>
+</ol>
+</div>
+
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">
+ssh -i .ssh/${GUID}key ec2-user@bastion.$GUID.example.opentlc.com
+</code></pre>
+</div>
+</div>
+
 <div class="sect1"><h2 id="_configure_authentication_against_ipa_ldap_server">2. Configure Authentication Against IPA (LDAP) Server</h2><div class="sectionbody"><div class="paragraph"><p>In this section, you configure the OpenShift master API servers that you
    installed in a previous lab to authenticate against an existing IPA (LDAP)
     server and synchronize or create OpenShift group objects to match the groups
