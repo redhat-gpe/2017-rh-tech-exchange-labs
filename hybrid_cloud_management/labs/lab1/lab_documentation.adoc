@@ -163,36 +163,6 @@ The first entry provides a descriptive name for the task. The second entry calls
         state: latest
 ----
 
-.. The following line creates the task for ensuring that the latest version of the firewalld package is installed. Be aware of the indentation which indicates that this task is part of the `block` of tasks.
-+
-The first entry provides a descriptive name for the task. The second entry calls the *yum* module. The remaining entries pass the necessary arguments to ensure the latest version of the *firewalld* package is installed.
-+
-----
-    - name: latest firewalld version installed
-      yum:
-        name: firewalld
-        state: latest
-----
-
-.. The following code block creates a list of tasks to configure *firewalld*. The indentation indicates that the block is contained by the play and is an item in the *tasks* list.
-+
-----
-  - block:
-----
-
-.. The following lines create the task to ensure *firewalld* opens HTTP service to remote systems.
-+
-The first entry provides a descriptive name for the task. The second entry is indented within the block and calls the *firewalld* module. The remaining entries are indented to show they are arguments for *firewalld*. They ensure that access to the HTTP service is permanently allowed.
-+
-----
-    - name: firewalld permits http service
-      firewalld:
-        service: http
-        permanent: true
-        state: enabled
-        immediate: yes
-----
-
 .. The following lines create a new block for service management tasks.
 +
 ----
@@ -221,6 +191,37 @@ The first entry provides a descriptive name for the task. The second entry is in
         name: firewalld
         enabled: true
         state: started
+----
+
+
+.. The following line creates the task for ensuring that the latest version of the firewalld package is installed. Be aware of the indentation which indicates that this task is part of the `block` of tasks.
++
+The first entry provides a descriptive name for the task. The second entry calls the *yum* module. The remaining entries pass the necessary arguments to ensure the latest version of the *firewalld* package is installed.
++
+----
+    - name: latest firewalld version installed
+      yum:
+        name: firewalld
+        state: latest
+----
+
+.. The following code block creates a list of tasks to configure *firewalld*. The indentation indicates that the block is contained by the play and is an item in the *tasks* list.
++
+----
+  - block:
+----
+
+.. The following lines create the task to ensure *firewalld* opens HTTP service to remote systems.
++
+The first entry provides a descriptive name for the task. The second entry is indented within the block and calls the *firewalld* module. The remaining entries are indented to show they are arguments for *firewalld*. They ensure that access to the HTTP service is permanently allowed.
++
+----
+    - name: firewalld permits http service
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
 ----
 
 .. The following line creates a new block for web content management tasks. The indentation indicates that the block is contained by the play and that it is an item in the tasks list.
