@@ -1,0 +1,15 @@
+---
+- name: Install webserver using roles
+  hosts: workstation.example.com
+  become: yes
+  roles:
+    - { role: webserver }
+
+- name: Test for successful installation
+  hosts: ansible1.example.com
+  tasks:
+  - name: connect to webserver
+    uri:
+      url: http://workstation.example.com
+      status_code: 200
+

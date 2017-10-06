@@ -1,0 +1,44 @@
+---
+- name: Web Server Install
+  hosts: workstation.example.com
+  become: yes
+  tasks:
+  - block:
+    - name: latest httpd version installed
+      yum:
+        name: httpd
+        state: latest
+    - name: latest firewalld version installed
+      yum:
+        name: firewalld
+        state: latest
+  - block:
+    - name: firewalld enabled and running
+      service:
+        name: firewalld
+        enabled: true
+        state: started
+    - name: firewalld permits http service
+      firewalld:
+        service: http
+        permanent: true
+        state: enabled
+        immediate: yes
+  - block:
+    - name: httpd enabled and running
+      service:
+        name: httpd
+        enabled: true
+        state: started
+  - block:
+    - name: test html page
+      copy:
+        content: "Hello World, I was configured using Ansible!\n"
+        dest: /var/www/html/index.html
+- name: test
+  hosts: ansible1.example.com
+  tasks:
+  - name: connect to webserver
+    uri:
+      url: http://workstation.example.com
+      status_code: 200
