@@ -8,9 +8,7 @@
 
 :numbered:
 
-
-
-== Lab 2 Instructions
+=== Access Tower
 
 . In your browser navigate to your pre-staged Ansible Tower. This is the *ansible1* host. The external URL to point your browser to is https://ansible1-$GUID.rhpds.opentlc.com/
 +
@@ -24,25 +22,33 @@ image::images/home_screen.png[]
 . Create a new inventory named *Lab Hosts* and add *workstation.example.com* to this inventory.
 +
 image::images/inventory_home.png[]
-+
-Navigate to the *Inventories* tab in the Tower UI.
+
+=== Create Inventory
+
+. Navigate to the *Inventories* tab in the Tower UI.
 +
 image::images/inventory_add_shot.png[]
-+
-Click *+Add*. Fill in the name as *Lab Hosts* and for Organization click the find button and select *Default*. Click *Save* to create this inventory.
+
+. Click *+Add*. Fill in the name as *Lab Hosts* and for Organization click the find button and select *Default*. Click *Save* to create this inventory.
 +
 image::images/inventory_add_host_page.png[]
-+
-Once the inventory we need to populate it. In this inventory we will be adding your workstation as a machine to run against. Select *+Add Host*. In host name fill in *workstation.example.com*. Click *Save* to add the workstation to the *Lab Hosts* inventory.
+
+. Once the inventory is created we need to populate it. In this inventory we will be adding your workstation as a machine to run against. 
+.. Select *+Add Host*.
+.. In *HOST NAME* field enter *workstation.example.com*.
+
+.. Click *Save* to add the workstation to the *Lab Hosts* inventory.
 +
 image::images/inventory_add_host_to_list.png[]
+
+=== Copy Playbook Into Ansible Projects Manually
 
 . From your terminal, ssh from the *workstation.example.com* machine to the *ansible1.example.com* host.
 +
 You should have the GIT downloaded to root's home directory. If the directory `/root/rhte-na` does not exist, download it using the following command:
 +
 ----
-$ git clone https://github.com/redhat-gpe/rhte-na.git
+# git clone https://github.com/redhat-gpe/rhte-na.git
 ----
 
 . Copy the *ws_config.yml* playbook and *roles* directory from the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory into a new directory named *webserver_config* in `/var/lib/awx/projects`
@@ -53,34 +59,35 @@ $ git clone https://github.com/redhat-gpe/rhte-na.git
 This is the directory where manual projects as well as source controlled project caches get stored.
 +
 ----
-$ cd /var/lib/awx/projects
+# cd /var/lib/awx/projects
 ----
 
 .. Make the *webserver_config* directory.
 +
 ----
-$ mkdir webserver_config
+# mkdir webserver_config
 ----
 
 .. Switch to the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory.
 +
 ----
-$ cd /root/rhte-na/hybrid_cloud_management/labs/lab2/source
+# cd /root/rhte-na/hybrid_cloud_management/labs/lab2/source
 ----
 
 .. Copy the *ws_config.yml* playbook and *roles* directory to the *webserver_config* directory.
 +
 ----
-$ cp ws_config.yml /var/lib/awx/projects/webserver_config
-$ cp roles /var/lib/awx/projects/webserver_config
+# cp ws_config.yml /var/lib/awx/projects/webserver_config
+# cp roles /var/lib/awx/projects/webserver_config
 ----
 
 .. Change ownership of the webserver_config folder to `awx`
 +
 ----
-$ chown -R awx:awx /var/lib/awx/projects/webserver_config
+# chown -R awx:awx /var/lib/awx/projects/webserver_config
 ----
 
+=== Create Project
 
 . Create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
 +
@@ -89,6 +96,9 @@ image::images/project_home.png[]
 Navigate to the *Projects* tab. Click *+Add*. Fill in the name as *Webserver Configuration*. Click the search button for Organization and select *Default*. For SCM we are going to use *Manual* as the project is pre-populated locally on the Tower server. The directory that the projects are stored is `/var/lib/awx/projects`. For playbook directory select `webserver_config`
 +
 image::images/project_new_project.png[]
+
+
+=== Create Credential
 
 . Create a new credential named *Lab Machines*.
 +
@@ -140,6 +150,8 @@ SkfvR3ErKaYjXKsFvyS2tFSmpAr8fCcGhXbycHwMD6WamkuKDbPwQw==
 -----END RSA PRIVATE KEY-----
 ----
 
+=== Create Job Template
+
 . Create a new Job Template named *Lab Webserver Configuration*.
 +
 Navigate to the Templates tab.
@@ -166,6 +178,8 @@ image::images/job_template_save.png[]
 +
 Finally, select *Save* to create this Job Template.
 
+=== Launch Job Template
+
 . Run the *Lab Webserver Configuration* Job Template.
 +
 Navigate to `Templates`.
@@ -186,6 +200,8 @@ When prompted for extra variables, input the following YAML into the text box.
 ---
 body_content: "Hello from the extra vars!"
 ----
+
+== Lab 2 Stretch Goal 1
 
 . *Stretch Goal:* Configure LDAP Authentication
 +
