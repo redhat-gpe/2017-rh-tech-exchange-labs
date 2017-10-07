@@ -17,39 +17,37 @@ Your CloudForms Customization lab environment contains the following:
 * CloudForms appliance
 * Red Hat Virtualization Manager
 * Red Hat Enterprise Linux + KVM host
-* VMware vSphere + 2 ESXi hosts
-* Red Hat Satellite
+* Red Hat Satellite 6
 * Ansible Tower by Red Hat
-* Infoblox IPAM appliance
+* Storage host
 
 [IMPORTANT]
 The CloudForms appliance is fully configured with all of the above providers.
 
 === Access Lab Workstation
 
-. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+. Download the lab private SSH key to your system's home directory (key location provided here is just an example):
++
+[source,text]
+----
+$ curl http://www.opentlc.com/rhte-na/labkey -o ~/.ssh/labkey
+----
+
+. Use SSH to access the lab workstation as *root* using the lab's private SSH key:
 .. For macOS and Linux users, execute the following:
 +
 [source,text]
 ----
-$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+$ ssh -i ~/.ssh/labkey root@workstation-$GUID.rhpds.opentlc.com
 ----
 +
 [NOTE]
-Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+Replace `$GUID` with your lab environment GUID provided by the instructor.
 
 .. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
 +
 [IMPORTANT]
-To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
-
-. After logging in, make sure you can become `root` on the lab workstation:
-+
-[source,text]
-----
-$ sudo -i
-#
-----
+To avoid problems when using SSH to access your lab hosts, always use the FQDN host name and not the IP address.
 
 === Access Red Hat Enterprise Virtualization Console with macOS
 
