@@ -12,7 +12,10 @@
 
 == Lab 2 Instructions
 
-. In your browser navigate to your pre-staged Ansible Tower. This is the *ansible1* host. The external URL to point your browser to is https://ansible1-$guid.rhpds.opentlc.com/
+. In your browser navigate to your pre-staged Ansible Tower. This is the *ansible1* host. The external URL to point your browser to is https://ansible1-$GUID.rhpds.opentlc.com/
++
+[IMPORTANT]
+Please replace $GUID with your lab environment's assigned GUID.
 +
 image::images/home_screen.png[]
 
