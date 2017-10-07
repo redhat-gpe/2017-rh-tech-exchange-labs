@@ -83,11 +83,17 @@ The directory `/var/lib/awx/projects` is where manual projects as well as source
 
 === Create Project
 
-. Create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
+In the section we will create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
 +
 image::images/project_home.png[]
-+
-Navigate to the *Projects* tab. Click *+Add*. Fill in the name as *Webserver Configuration*. Click the search button for Organization and select *Default*. For SCM we are going to use *Manual* as the project is pre-populated locally on the Tower server. The directory that the projects are stored is `/var/lib/awx/projects`. For playbook directory select `webserver_config`
+
+. Navigate to the *Projects* tab.
+. Click *+Add*.
+. Fill in the *NAME* as *Webserver Configuration*.
+. Click the search button for Organization and select *Default*.
+. For SCM we are going to use *Manual* as the project is pre-populated locally on the Tower server.
+. The directory that the projects are stored is `/var/lib/awx/projects`. 
+. For playbook directory select `webserver_config`
 +
 image::images/project_new_project.png[]
 
