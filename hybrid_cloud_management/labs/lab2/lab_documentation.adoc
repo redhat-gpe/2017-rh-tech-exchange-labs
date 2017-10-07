@@ -200,6 +200,22 @@ image::images/job_template_selection.png[]
 
 . Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
 
+=== Verify Job Run
+
+. After the job run is complete, on the workstation host, run the following command:
++
+----
+# curl http://localhost
+----
+
+You should see the following output:
++
+----
+Hello World, I was configured using Ansible!
+----
+
+=== Run Job With Extra Vars
+
 . Run the Job Template again only this time passing in extra variables.
 
 .. When prompted for extra variables, input the following YAML into the text box.
@@ -207,6 +223,20 @@ image::images/job_template_selection.png[]
 ----
 ---
 body_content: "Hello from the extra vars!"
+----
+
+=== Verify Job Run With Extra Vars
+
+. After the job run is complete, on the workstation host, run the following command:
++
+----
+# curl http://localhost
+----
+
+.  You should see the following output:
++
+----
+Hello from the extra vars!
 ----
 
 == Lab 2 Stretch Goal 1
