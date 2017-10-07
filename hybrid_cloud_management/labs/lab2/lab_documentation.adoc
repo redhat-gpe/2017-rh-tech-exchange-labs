@@ -19,11 +19,11 @@ image::images/home_screen.png[]
 
 . Log in as `admin` with the password `r3dh4t1!`
 
-. Create a new inventory named *Lab Hosts* and add *workstation.example.com* to this inventory.
+=== Create Inventory
+
+In this section we will create a new inventory named *Lab Hosts* and add *workstation.example.com* to this inventory.
 +
 image::images/inventory_home.png[]
-
-=== Create Inventory
 
 . Navigate to the *Inventories* tab in the Tower UI.
 +
