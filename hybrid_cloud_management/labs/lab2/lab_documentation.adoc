@@ -96,6 +96,7 @@ image::images/project_home.png[]
 . For playbook directory select `webserver_config`
 +
 image::images/project_new_project.png[]
+. Click *SAVE*
 
 
 === Create Credential
@@ -154,35 +155,29 @@ SkfvR3ErKaYjXKsFvyS2tFSmpAr8fCcGhXbycHwMD6WamkuKDbPwQw==
 -----END RSA PRIVATE KEY-----
 ----
 
-. Click *Save*
+. Click *SAVE*
 
 === Create Job Template
 
 In this section we will create a new Job Template named *Lab Webserver Configuration*.
 
-. Navigate to the Templates tab.
-
-. Click *+Add* and select `Job Template`.
+. Navigate to the *Templates* tab.
+. Click *+ADD* and select `Job Template`.
+. For *NAME* enter *Lab Webserver Configuration*.
+. The *JOB TYPE* should be `Run`.
+. For *INVENTORY*, select the search icon and select the inventory we previously created, `Lab Hosts`
+. For *PROJECT*, select the search icon and select the project we created, `Webserver Configuration`.
+. For *PLAYBOOK* select `ws_config.yml`.
+. For *MACHINE CREDENTIAL* select the `Lab Machines` credential.
 +
-image::images/job_template_home_add.png[]
+[NOTE]
+Because the playbook itself contains the configuration to escalate to root for it's tasks, we do *not* need to select `Enable Privilege Escalation`.
 
-. Fill in *Lab Webserver Configuration* for the name. The Job Type should be `Run`.
-+
-image::images/job_template_create.png[]
-
-. For Inventory, select the search icon and select the inventory we previously created, `Lab Hosts`
-+
-For the Project, select the search icon and select the Project we created, `Webserver Configuration`. For the Playbook you will want to select `ws_config.yml`.
-
-. For the Machine Credential we will select the `Lab Machines` credential.
-+
-Because the playbook itself contains the configuration to escalate to root for it's tasks, we do not need to select `Enable Privilege Escalation`.
-
-. Under `Extra Variables` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
+. Under `EXTRA VARIABLES` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
 +
 image::images/job_template_save.png[]
 
-. Finally, select *Save* to create this Job Template.
+. Finally, click *SAVE* to create this Job Template.
 
 === Launch Job Template
 
