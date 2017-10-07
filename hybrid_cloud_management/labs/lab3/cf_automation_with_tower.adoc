@@ -585,7 +585,6 @@ Because of lack of DNS in the environment, the above IP address and network sett
 +
 [NOTE]
 The out-of-the-box `oVirt cloud-init` customization template that comes with CloudForms 4.5 GA is broken. The Red Hat Cloud Image Template is a custom one that fixes the broken GA cloud-init script.
-+
 
 === Examine Outcome
 
