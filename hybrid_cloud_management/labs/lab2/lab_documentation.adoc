@@ -119,7 +119,7 @@ image::images/credentials_home.png[]
 . For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
 . Fill out the *USERNAME* as `awxservice` which is a local user on the workstation machine. 
 . Set *PRIVILEGE ESCALATION* method to *sudo*. 
-. Set *PRIVILEGE ESCALATION USERNAME to *awxservice* as this service user has the ability to sudo to root to run commands that require priviledge escalation.
+. Set *PRIVILEGE ESCALATION USERNAME* to *awxservice* as this service user has the ability to sudo to root to run commands that require priviledge escalation.
 +
 image::images/credential_create.png[]
 
