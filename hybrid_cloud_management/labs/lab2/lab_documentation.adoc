@@ -72,7 +72,7 @@ The directory `/var/lib/awx/projects` is where manual projects as well as source
 +
 ----
 # cp ws_config.yml /var/lib/awx/projects/webserver_config
-# cp roles /var/lib/awx/projects/webserver_config
+# cp -r roles /var/lib/awx/projects/webserver_config
 ----
 
 .. Change ownership of the webserver_config folder to `awx`
