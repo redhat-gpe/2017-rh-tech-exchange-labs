@@ -364,24 +364,27 @@ Use the previous playbooks as well as the online module documentation for refere
 This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com* but executed on *ansible1.example.com*.
 
 . *Stretch Goal 2:* Install Ansible Tower on *workstation.example.com*
-+
-[WARNING]
-Before performing the stretch goal of installing Tower you must run the `cleanup.yml` playbook.
 
-.. The installer is downloaded to `/root/ansible-tower-setup-3.1.3` on your *ansible1.example.com* host
-
-.. SSH into your *ansible1.example.com* host and switch to the /root/ansible-tower-setup-3.1.3 directory
+.. Make sure you are logged directly into the *workstation.example.com* host as *root*.
+.. Download the installer in `/root`:
 +
 ----
-# ssh ansible1.example.com
-# cd /root/ansible-tower-setup-3.1.3
+# cd /root
+# wget http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
+----
+
+.. Uncompress the archive and `cd` into the directory:
++
+----
+# tar -xf ansible-tower-setup-latest.tar.gz
+# cd ansible-tower-setup-*
 ----
 
 .. Modify the `inventory` file to look like the following
 +
 ----
 [tower]
-workstation.example.com
+localhost ansible_connection=local
 
 [database]
 
@@ -399,23 +402,19 @@ rabbitmq_port=5672
 rabbitmq_vhost=tower
 rabbitmq_username=tower
 rabbitmq_password='r3dh4t1!'
-rabbitmq_cookie=cookiemonster
+rabbitmq_cookie=rabbitmqcookie
 
 # Needs to be true for fqdns and ip addresses
-rabbitmq_use_long_name=true
+rabbitmq_use_long_name=false
 ----
-+
-This configuration, through ran on the *ansible1.example.com* host, will run the installation on *workstation.example.com*.
 
 .. Run the installation script.
 +
-This script runs an Ansible playbook with the inventory you just set up to install ansible on *workstation.exmaple.com*. The SSH key for *ansible1.example.com* was preconfigured to be a trusted authentication method on *workstation.example.com*.
+This script runs an Ansible playbook with the inventory you just set up to install ansible on *workstation.exmaple.com*. 
 +
 ----
 # ./setup.sh
 ----
-
-.. SSH into the *workstation.example.com* host
 
 .. Open port http and https ports on the firewall configuration
 +
