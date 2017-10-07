@@ -154,6 +154,8 @@ SkfvR3ErKaYjXKsFvyS2tFSmpAr8fCcGhXbycHwMD6WamkuKDbPwQw==
 -----END RSA PRIVATE KEY-----
 ----
 
+. Click *Save*
+
 === Create Job Template
 
 In this section we will create a new Job Template named *Lab Webserver Configuration*.
