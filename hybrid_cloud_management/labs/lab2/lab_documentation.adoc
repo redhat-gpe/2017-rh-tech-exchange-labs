@@ -53,20 +53,14 @@ If the directory `/root/rhte-na` does not exist, download it using the following
 
 . Copy the *ws_config.yml* playbook and *roles* directory from the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory into a new directory named *webserver_config* in `/var/lib/awx/projects`
 
-.. Switch to the `/var/lib/awx/projects` directory.
+.. Make the */var/lib/awx/projects/webserver_config* directory.
++
+----
+# mkdir /var/lib/awx/projects/webserver_config
+----
 +
 [NOTE]
-This is the directory where manual projects as well as source controlled project caches get stored.
-+
-----
-# cd /var/lib/awx/projects
-----
-
-.. Make the *webserver_config* directory.
-+
-----
-# mkdir webserver_config
-----
+The directory `/var/lib/awx/projects` is where manual projects as well as source controlled project caches get stored.
 
 .. Switch to the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory.
 +
