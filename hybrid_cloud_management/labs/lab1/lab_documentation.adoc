@@ -112,7 +112,7 @@ If you notice, the last piece of the playbook is to test that you get a *200* re
 +
 The first play in the playbook runs on the `workstation.example.com` host while the second runs from `ansible1.example.com`.
 
-.. The first line of the /root/rhte_na/hybrid_cloud_management/labs/lab1/source/playbook1.yml is to start the YAML file.
+.. The first line of the `/root/rhte_na/hybrid_cloud_management/labs/lab1/source/playbook1.yml` is to start the YAML file.
 +
 ----
 ---
