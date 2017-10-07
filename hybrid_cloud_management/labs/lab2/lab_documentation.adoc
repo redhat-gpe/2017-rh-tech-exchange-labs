@@ -112,13 +112,17 @@ image::images/settings_home.png[]
 +
 image::images/credentials_home.png[]
 
-. Fill in the name as *Lab Machines*. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
+. Click *+ADD*.
 
-. Fill out the username as `awxservice` which is a local user on the workstation machine. Ensure the privilege escalation method is sudo. The `awxservice` service user has the ability to sudo to root to run commands that require priviledge escalation.
+. Fill in the *NAME* as *Lab Machines*. 
+. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
+. Fill out the *USERNAME* as `awxservice` which is a local user on the workstation machine. 
+. Set *PRIVILEGE ESCALATION* method to *sudo*. 
+. Set *PRIVILEGE ESCALATION USERNAME to *awxservice* as this service user has the ability to sudo to root to run commands that require priviledge escalation.
 +
 image::images/credential_create.png[]
 
-. For private key, copy and paste the following private ssh key:
+. For *PRIVATE KEY*, copy and paste the following private ssh key:
 +
 ----
 -----BEGIN RSA PRIVATE KEY-----
