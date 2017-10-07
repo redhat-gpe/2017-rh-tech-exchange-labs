@@ -84,7 +84,7 @@ The directory `/var/lib/awx/projects` is where manual projects as well as source
 === Create Project
 
 In the section we will create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
-+
+
 image::images/project_home.png[]
 
 . Navigate to the *Projects* tab.
