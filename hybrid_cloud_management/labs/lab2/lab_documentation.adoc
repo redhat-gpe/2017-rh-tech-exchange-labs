@@ -45,7 +45,7 @@ image::images/inventory_add_host_to_list.png[]
 
 . From your terminal, ssh from the *workstation.example.com* machine to the *ansible1.example.com* host.
 +
-You should have the GIT downloaded to root's home directory. If the directory `/root/rhte-na` does not exist, download it using the following command:
+If the directory `/root/rhte-na` does not exist, download it using the following command:
 +
 ----
 # git clone https://github.com/redhat-gpe/rhte-na.git
