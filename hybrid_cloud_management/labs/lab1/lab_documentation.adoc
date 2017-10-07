@@ -436,5 +436,15 @@ This script runs an Ansible playbook with the inventory you just set up to insta
 .. On your personal machine, navigate your browser to your workstation's external DNS name `workstation-$GUID.rhpds.opentlc.com`
 
 .. You should see the Tower home screen, though you will not have a license for this lab.
+
+=== Cleanup
+
+In the next lab you will work with and learn how to use and configure a pre-installed Ansible Tower.  This Ansible Tower must be uninstalled before you continue or you will not be able to complete the next lab.
+
+. On the workstation host do the following to deactivate and uninstall Ansible Tower:
 +
-In the next lab you will work with and learn how to use and configure Ansible Tower.
+----
+# ansible-tower-service stop
+# yum -y remove rabbitmq-server
+# rm -rf /etc/tower /var/lib/{pgsql,awx,rabbitmq}
+----
