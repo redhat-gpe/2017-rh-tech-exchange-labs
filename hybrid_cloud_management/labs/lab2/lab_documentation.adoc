@@ -208,7 +208,7 @@ image::images/job_template_selection.png[]
 # curl http://localhost
 ----
 
-You should see the following output:
+. You should see the following output:
 +
 ----
 Hello World, I was configured using Ansible!
@@ -233,7 +233,7 @@ body_content: "Hello from the extra vars!"
 # curl http://localhost
 ----
 
-.  You should see the following output:
+. You should see the following output:
 +
 ----
 Hello from the extra vars!
