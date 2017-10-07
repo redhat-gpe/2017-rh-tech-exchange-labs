@@ -3,13 +3,11 @@
 :toc2:
 :linkattrs:
 
-
-== Lab 1
-
 :numbered:
 
+== Lab Introduction
 
-== Access Lab Environment
+=== Lab Environment
 
 Your CloudForms Customization lab environment contains the following:
 
@@ -84,6 +82,8 @@ Be sure to verify provider's status following _every_ lab environment startup.
 
 == Lab 1 Instructions
 
+=== Set Up Environment
+
 . Log on to your workstation machine as previously described.
 
 . From there, log in to the *ansible1.example.com* host as the root user
@@ -97,6 +97,8 @@ Be sure to verify provider's status following _every_ lab environment startup.
 ----
 # git clone https://github.com/redhat-gpe/rhte-na.git
 ----
+
+=== Explore Playbooks
 
 . Change directory to `rhte-na/hybrid_cloud_management/labs/lab1`
 +
@@ -253,6 +255,7 @@ The task uses the *uri* module and expects a *200* return code.
       status_code: 200
 ----
 
+=== Running Playbooks
 
 . Run the `playbook1.yml` playbook.
 +
@@ -270,6 +273,8 @@ This output is not verbose. For standard output open the playbook add *--verbose
 ----
 # ansible-playbook -i inventory cleanup.yml
 ----
+
+=== Ansible Roles Introduction
 
 . Switch to the `roles` directory under the current directory
 +
