@@ -102,7 +102,9 @@ image::images/project_new_project.png[]
 
 In this section we will create a new credential named *Lab Machines*.
 
-. Navigate to the settings tab image::images/settings_button.png[]
+. Navigate to the settings tab 
++
+image:images/settings_button.png[]
 +
 image::images/settings_home.png[]
 
