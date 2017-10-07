@@ -423,7 +423,8 @@ This script runs an Ansible playbook with the inventory you just set up to insta
 .. Open port http and https ports on the firewall configuration
 +
 ----
-# firewall-cmd --permanent --add-service=http,https
+# firewall-cmd --permanent --add-service=http
+# firewall-cmd --permanent --add-service=https
 # firewall-cmd --reload
 ----
 
