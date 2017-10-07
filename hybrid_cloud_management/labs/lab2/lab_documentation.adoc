@@ -100,25 +100,23 @@ image::images/project_new_project.png[]
 
 === Create Credential
 
-. Create a new credential named *Lab Machines*.
-+
-Navigate to the settings tab.
-+
-image::images/settings_button.png[]
+In this section we will create a new credential named *Lab Machines*.
+
+. Navigate to the settings tab image::images/settings_button.png[]
 +
 image::images/settings_home.png[]
-+
-Navigate to *Credentials*
+
+. Navigate to *Credentials*
 +
 image::images/credentials_home.png[]
-+
-Fill in the name as *Lab Machines*. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
-+
-Fill out the username as `awxservice` which is a local user on the workstation machine. Ensure the privilege escalation method is sudo. The `awxservice` service user has the ability to sudo to root to run commands that require priviledge escalation.
+
+. Fill in the name as *Lab Machines*. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
+
+. Fill out the username as `awxservice` which is a local user on the workstation machine. Ensure the privilege escalation method is sudo. The `awxservice` service user has the ability to sudo to root to run commands that require priviledge escalation.
 +
 image::images/credential_create.png[]
-+
-For private key, copy and paste the following private ssh key:
+
+. For private key, copy and paste the following private ssh key:
 +
 ----
 -----BEGIN RSA PRIVATE KEY-----
@@ -152,49 +150,48 @@ SkfvR3ErKaYjXKsFvyS2tFSmpAr8fCcGhXbycHwMD6WamkuKDbPwQw==
 
 === Create Job Template
 
-. Create a new Job Template named *Lab Webserver Configuration*.
-+
-Navigate to the Templates tab.
-+
-Click *+Add* and select `Job Template`.
+In this section we will create a new Job Template named *Lab Webserver Configuration*.
+
+. Navigate to the Templates tab.
+
+. Click *+Add* and select `Job Template`.
 +
 image::images/job_template_home_add.png[]
-+
-Fill in *Lab Webserver Configuration* for the name. The Job Type should be `Run`.
+
+. Fill in *Lab Webserver Configuration* for the name. The Job Type should be `Run`.
 +
 image::images/job_template_create.png[]
-+
-For Inventory, select the search icon and select the inventory we previously created, `Lab Hosts`
+
+. For Inventory, select the search icon and select the inventory we previously created, `Lab Hosts`
 +
 For the Project, select the search icon and select the Project we created, `Webserver Configuration`. For the Playbook you will want to select `ws_config.yml`.
-+
-For the Machine Credential we will select the `Lab Machines` credential.
+
+. For the Machine Credential we will select the `Lab Machines` credential.
 +
 Because the playbook itself contains the configuration to escalate to root for it's tasks, we do not need to select `Enable Privilege Escalation`.
-+
-Under `Extra Variables` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
+
+. Under `Extra Variables` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
 +
 image::images/job_template_save.png[]
-+
-Finally, select *Save* to create this Job Template.
+
+. Finally, select *Save* to create this Job Template.
 
 === Launch Job Template
 
-. Run the *Lab Webserver Configuration* Job Template.
-+
-Navigate to `Templates`.
-+
-Locate the `Lab Webserver Configuration` Job Template and click the run button (this is the rocketship button).
+In this section we will run the *Lab Webserver Configuration* Job Template.
+
+. Navigate to the `Templates` tab.
+
+. Locate the `Lab Webserver Configuration` Job Template and click the run button (this is the rocketship button).
+.. Do not input any extra variables when prompted.
 +
 image::images/job_template_selection.png[]
-+
-Do not input any extra variables when prompted.
-+
-Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
+
+. Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
 
 . Run the Job Template again only this time passing in extra variables.
-+
-When prompted for extra variables, input the following YAML into the text box.
+
+.. When prompted for extra variables, input the following YAML into the text box.
 +
 ----
 ---
