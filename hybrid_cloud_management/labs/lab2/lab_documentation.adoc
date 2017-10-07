@@ -117,9 +117,13 @@ image::images/credentials_home.png[]
 
 . Fill in the *NAME* as *Lab Machines*. 
 . For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
-. Fill out the *USERNAME* as `awxservice` which is a local user on the workstation machine. 
+. Fill out the *USERNAME* as `awxservice` which is a local user on the workstation machine.
++
+[NOTE]
+The *awxservice* user has the ability to `sudo` to *root* on the *workstation* host to run commands that require priviledge escalation.
+
 . Set *PRIVILEGE ESCALATION* method to *sudo*. 
-. Set *PRIVILEGE ESCALATION USERNAME* to *awxservice* as this service user has the ability to sudo to root to run commands that require priviledge escalation.
+. Set *PRIVILEGE ESCALATION USERNAME* to *root*.
 +
 image::images/credential_create.png[]
 
@@ -191,6 +195,8 @@ In this section we will run the *Lab Webserver Configuration* Job Template.
 .. Do not input any extra variables when prompted.
 +
 image::images/job_template_selection.png[]
+
+.. Click *LAUNCH*.
 
 . Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
 
