@@ -172,6 +172,8 @@ In this section we will create a new Job Template named *Lab Webserver Configura
 +
 [NOTE]
 Because the playbook itself contains the configuration to escalate to root for it's tasks, we do *not* need to select `Enable Privilege Escalation`.
++
+image::images/job_template_create.png[]
 
 . Under `EXTRA VARIABLES` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
 +
