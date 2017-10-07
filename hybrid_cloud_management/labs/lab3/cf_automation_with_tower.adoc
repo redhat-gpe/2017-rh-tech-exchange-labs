@@ -8,29 +8,81 @@
 
 :numbered:
 
+== Lab Introduction
 
-== Set Up Lab
+=== Lab Environment
 
-=== Clean Up Lab Environment
+Your CloudForms Customization lab environment contains the following:
 
-. Log in as the `admin` user with password `r3dh4t1!` to CloudForms at https://cf-$GUID.rhpds.opentlc.com.
+* Student workstation
+* CloudForms appliance
+* Red Hat Virtualization Manager
+* Red Hat Enterprise Linux + KVM host
+* Red Hat Satellite 6
+* Ansible Tower by Red Hat
+* Storage host
+
+[IMPORTANT]
+The CloudForms appliance is fully configured with all of the above providers.
+
+=== Access Lab Workstation
+
+. Download the lab private SSH key to your system's home directory (key location provided here is just an example):
++
+[source,text]
+----
+$ curl http://www.opentlc.com/rhte-na/labkey -o ~/.ssh/labkey
+----
+
+. Use SSH to access the lab workstation as *root* using the lab's private SSH key:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i ~/.ssh/labkey root@workstation-$GUID.rhpds.opentlc.com
+----
 +
 [NOTE]
-Replace `$GUID` with the GUID provided to you in the provisioning email you received from the OPENTLC lab system.
+Replace `$GUID` with your lab environment GUID provided by the instructor.
 
-. Verify your provider authentication status by navigating to *Compute > Infrastructure > Providers > SELECT PROVIDER*.  View the *Default Credentials* field.
-. If *Invalid*, select *Authentication > Re-check Authentication Status*.
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
 +
+[IMPORTANT]
+To avoid problems when using SSH to access your lab hosts, always use the FQDN host name and not the IP address.
+
+
+=== Access Red Hat Enterprise Virtualization Console with macOS
+
+[IMPORTANT]
+Red Hat Enterprise Virtualization does not support macOS for VM console access. See link:https://access.redhat.com/solutions/93613[this page^] for unsupported steps on obtaining console access for macOS.
+
+=== Verify Provider Authentication Status
+
+When the CloudForms appliance and providers are down for any period of time (stopped overnight or initially provisioned in the lab environment) they lose connection to each other. CloudForms does not immediately re-establish connectivity. Every time you start your lab environment you must re-establish the communication between CloudForms and your providers. The appliance does attempt to reconnect at some point, but it may take hours, so it is best to follow the procedure below to get things running sooner.
+
 [WARNING]
-You must verify provider authentication status every time you start your environment. If your providers are not properly authenticated, some of the labs will hang and you will have to start over.
+If you do not do this every time you start your environment, some of the labs will hang and you will have to start over.
 
-=== Download the SSH Key and Test the SSH Connection
+. Log in to your CloudForms appliance at `https://cf-$GUID.rhpds.opentlc.com` as the `admin` user with the `r3dh4t1!` password.
++
+[NOTE]
+Replace `$GUID` with the GUID provided to you in the email you received from the OPENTLC lab system.
 
-. You will need an SSH key in order to access your workstation environment.
-.. On your personal laptop, change directories to wherever you wish to store your Tech Exchange SSH Key.
-.. Run the command `wget http://bit.ly/rhte-na-labkey`.
-.. Run the command `chmod 0400 /path_to_key/rhte-na-labkey` to correct private key permissions.
-.. Test the connection via the command `ssh -i /path_to_key/rhte-na-labkey root@workstation-<GUID>.rhpds.opentlc.com`.  Be sure to substitute your GUID in the command.
+. Navigate to *Compute -> Infrastructure -> Providers*.
+
+. Make sure all of your providers have image:images/greencheck.png[] in the status quadrant as shown here:
++
+image::images/goodproviders.png[]
+
+. If your providers do not have a image:images/greencheck.png[], you must re-check authentication status:
+.. Click the provider and select *Authentication -> Re-check Authentication Status*:
++
+image::images/recheck.png[]
+
+. Select *Compute -> Infrastructure -> Providers* repeatedly until the provider's status is image:images/greencheck.png[].
+
+[IMPORTANT]
+Be sure to verify provider's status following _every_ lab environment startup.
 
 == Setup Tower for Job Template Execution via CloudForms
 
