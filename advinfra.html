@@ -38,6 +38,7 @@
     }
     </style>
 </head>
+
 <body>
     <div class="content">
         <img src="shadowman.png" alt="Red Hat" />
@@ -46,11 +47,27 @@
 
 	<hr>
 	<h3>Track: Container Adoption - Infrastructure</h3>
-	<h4>Basic Labs</h4>
+
+	<h4>How to Access Your Environment</h4>
+	<ul>
+	<li>Request the slip of paper from your cohort lead with your GUID on it.</li>
+	<li>Download your environment's private key as instructed on the paper.</li>
+	<li>Use the private key to SSH into your bastion host<br>
+		<code>ssh -i &lt;private key&gt; ec2-user@bastion.${GUID}.example.opentlc.com</code></li>
+	</ul>
+
+	<h4>Choose Your Lab</h4>	
+	<h5>Basic Labs</h5>
             <ul>
                 <li><a href="advinfra/02_01_Lab_HA_Deployment_Lab.html">Advanced Install of HA OpenShift Cluster</a></li>
+		<ul>
+			Requirements:
+			<li>Basic command of Ansible</li>
+			<li>Intermediate knowledge of OpenShift Architecture and Components</li>
+			<li>Obsessive need to type <code>oc get pods -o wide --all-namespaces</code></li>
+		</ul>
             </ul>
-	<h4>Advanced Labs</h4>
+	<h5>Advanced Labs</h5>
             <ul>
                 <li><a href="advinfra/cert_labs.html">Working with Certificates</a></li>
             </ul>
@@ -62,7 +79,7 @@
             </ul>
     </div>
 
-</body>
 <footer>Copyright ©2017 Red Hat, Inc.</footer>
 
+</body>
 </html>
