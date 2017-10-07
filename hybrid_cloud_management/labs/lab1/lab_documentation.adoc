@@ -47,39 +47,6 @@ Replace `$GUID` with your lab environment GUID provided by the instructor.
 [IMPORTANT]
 To avoid problems when using SSH to access your lab hosts, always use the FQDN host name and not the IP address.
 
-=== Access Red Hat Enterprise Virtualization Console with macOS
-
-[IMPORTANT]
-Red Hat Enterprise Virtualization does not support macOS for VM console access. See link:https://access.redhat.com/solutions/93613[this page^] for unsupported steps on obtaining console access for macOS.
-
-=== Verify Provider Authentication Status
-
-When the CloudForms appliance and providers are down for any period of time (stopped overnight or initially provisioned in the lab environment) they lose connection to each other. CloudForms does not immediately re-establish connectivity. Every time you start your lab environment you must re-establish the communication between CloudForms and your providers. The appliance does attempt to reconnect at some point, but it may take hours, so it is best to follow the procedure below to get things running sooner.
-
-[WARNING]
-If you do not do this every time you start your environment, some of the labs will hang and you will have to start over.
-
-. Log in to your CloudForms appliance at `https://cf-$GUID.rhpds.opentlc.com` as the `admin` user with the `r3dh4t1!` password.
-+
-[NOTE]
-Replace `$GUID` with the GUID provided to you in the email you received from the OPENTLC lab system.
-
-. Navigate to *Compute -> Infrastructure -> Providers*.
-
-. Make sure all of your providers have image:images/greencheck.png[] in the status quadrant as shown here:
-+
-image::images/goodproviders.png[]
-
-. If your providers do not have a image:images/greencheck.png[], you must re-check authentication status:
-.. Click the provider and select *Authentication -> Re-check Authentication Status*:
-+
-image::images/recheck.png[]
-
-. Select *Compute -> Infrastructure -> Providers* repeatedly until the provider's status is image:images/greencheck.png[].
-
-[IMPORTANT]
-Be sure to verify provider's status following _every_ lab environment startup.
-
 == Lab 1 Instructions
 
 === Set Up Environment
