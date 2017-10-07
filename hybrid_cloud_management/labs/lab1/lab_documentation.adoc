@@ -98,13 +98,13 @@ Be sure to verify provider's status following _every_ lab environment startup.
 # git clone https://github.com/redhat-gpe/rhte-na.git
 ----
 
-. Change directory to rhte-na/hybrid_cloud_management/labs/lab1
+. Change directory to `rhte-na/hybrid_cloud_management/labs/lab1`
 +
 ----
 # cd /root/rhte-na/hybrid_cloud_management/labs/lab1/source
 ----
 
-. View *playbook1.yml* within this directory.
+. View `playbook1.yml` within this directory.
 +
 The playbook contains ansible code to create and configure a web server. This includes opening the necessary ports on the firewall and ensuring the latest packages be installed.
 +
@@ -237,7 +237,7 @@ The first entry provides a descriptive name for the task. The second entry calls
         dest: /var/www/html/index.html
 ----
 
-.. The next section of *playbook1.yml* creates a second play within the playbook. The play is named *test* and acts on the current machine: `ansible1.example.com`.
+.. The next section of `playbook1.yml` creates a second play within the playbook. The play is named *test* and acts on the current machine: `ansible1.example.com`.
 +
 The task it performs is to connect to the webserver created in the first play.
 +
@@ -254,7 +254,7 @@ The task uses the *uri* module and expects a *200* return code.
 ----
 
 
-. Run the *playbook1.yml* playbook.
+. Run the `playbook1.yml` playbook.
 +
 ----
 # ansible-playbook -i inventory playbook1.yml
@@ -265,28 +265,47 @@ Analyze the run log and view the output.
 [NOTE]
 This output is not verbose. For standard output open the playbook add *--verbose* to the end of your ansible-playbook command.
 
-. Run the *cleanup.yml* playbook.
+. Run the `cleanup.yml` playbook.
 +
 ----
 # ansible-playbook -i inventory cleanup.yml
 ----
 
-. Switch to the roles directory under the current directory
+. Switch to the `roles` directory under the current directory
 +
 ----
 # cd roles
 ----
 
-. Browse the roles directory, specifically the webserver role directory.
+. Browse the roles directory.
 +
-The roles directory has the webserver role as well as a requirements.yml file. We will not be using the requirements.yml file in the main portion of the lab.
+----
+# find webserver/
+webserver/
+webserver/README.md
+webserver/defaults
+webserver/defaults/main.yml
+webserver/handlers
+webserver/handlers/main.yml
+webserver/meta
+webserver/meta/main.yml
+webserver/tasks
+webserver/tasks/main.yml
+webserver/tests
+webserver/tests/inventory
+webserver/tests/test.yml
+webserver/vars
+webserver/vars/main.yml
+----
++
+The roles directory has the webserver role.
 +
 The webserver role provides an example of an ansible role layout. In the tasks folder is a task list for the role with the name *main.yml*.
 
-. Open and view playbook2.
+. Go back to `/root/rhte-na/hybrid_cloud_management/labs/lab1/source` to open and view `playbook2.yml`.
 +
 ----
-# cd /root/rhte-na/hybrid_cloud_management/labs/lab1
+# cd /root/rhte-na/hybrid_cloud_management/labs/lab1/source
 # cat playbook2.yml
 ---
 - name: Install webserver using roles
@@ -304,11 +323,11 @@ The webserver role provides an example of an ansible role layout. In the tasks f
       status_code: 200
 ----
 +
-This playbook is far simpler than *playbook1.yml* but performs the same function.
+This playbook is far simpler than `playbook1.yml` but performs the same function.
 +
 Notice how the *webserver* role is included.
 
-. Run the *playbook2.yml* playbook.
+. Run the `playbook2.yml` playbook.
 +
 ----
 # ansible-playbook -i inventory playbook2.yml
@@ -332,22 +351,22 @@ Add the following lines:
   roles:
 ----
 
-. Run the *playbook2.yml* playbook again and observe the change that takes place.
+. Run the `playbook2.yml` playbook again and observe the change that takes place.
 +
 ----
 # ansible-playbook -i inventory playbook2.yml
 ----
 
-. *Stretch Goal 1:* Create a new playbook named *playbook3.yml* to create a new user and place a file in the user's home directory.
+. *Stretch Goal 1:* Create a new playbook named `playbook3.yml` to create a new user and place a file in the user's home directory.
 +
-Use the previous playbooks as well as the included module documentation for reference. The user should be named *consultant1* and in a primary group of *consultants*. The home directory should be */home/consultant*. The file should be called *hello_ansible.txt* located in */home/consultant*. The content of the file should be `"Hello World, from Ansible."`
+Use the previous playbooks as well as the included module documentation for reference. The user should be named *consultant1* and in a primary group of *consultants*. The home directory should be `/home/consultant`. The file should be called `hello_ansible.txt` located in `/home/consultant`. The content of the file should be `"Hello World, from Ansible."`
 +
 This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com* but executed on *ansible1.example.com*.
 
 . *Stretch Goal 2:* Install Ansible Tower on *workstation.example.com*
 +
 [WARNING]
-Before performing the stretch goal of installing Tower you must run the cleanup.yml playbook.
+Before performing the stretch goal of installing Tower you must run the `cleanup.yml` playbook.
 
 .. The installer is downloaded to `/root/ansible-tower-setup-3.1.3` on your *ansible1.example.com* host
 
