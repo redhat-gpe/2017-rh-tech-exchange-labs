@@ -1,8 +1,3 @@
-:scrollbar:
-:data-uri:
-:toc2:
-:linkattrs:
-
 
 == CloudForms Automation with Ansible Tower
 
