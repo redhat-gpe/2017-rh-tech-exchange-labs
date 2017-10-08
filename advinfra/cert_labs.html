@@ -518,8 +518,8 @@ export MASTER_API_HOSTPORT=$(sed -n 's/openshift_master_cluster_hostname=//p' ${
 <p>Retrieve the new "Intermediary CA" keys from the following location.</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">wget http://admin.shared.example.opentlc.com/certs/intermediary.cert.pem -O /root/ca.crt
-wget http://admin.shared.example.opentlc.com/certs/intermediary.key.pem -O /root/ca.key</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">wget http://www.opentlc.com/rhte-na-certs/ca/intermediary/certs/intermediary.cert.pem -O /root/ca.crt
+wget http://www.opentlc.com/rhte-na-certs/ca/intermediary/private/intermediary.key.pem -O /root/ca.key</code></pre>
 </div>
 </div>
 </li>
@@ -1146,7 +1146,7 @@ Server Temp Key: ECDH, prime256v1, 256 bits</code></pre>
 <p>On your laptop, download the following file.  It is the Root CA Certificate that has signed the Intermediary Certificate you have as your Platform CA, and has now signed most of OpenShift&#8217;s server certificates.</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">http://admin.shared.example.opentlc.com/certs/ca.cert.pem</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">http://www.opentlc.com/rhte-na-certs/ca/certs/ca.cert.pem</code></pre>
 </div>
 </div>
 </li>
@@ -1329,9 +1329,8 @@ closed</code></pre>
 <p>Get the New Wildcard Certificate, Key and Its CA Certificate</p>
 <div class="literalblock">
 <div class="content">
-<pre>wget http://admin.shared.example.opentlc.com/certs/wildcard.apps.${GUID}.example.opentlc.com.cert.pem
-wget http://admin.shared.example.opentlc.com/certs/wildcard.apps.${GUID}.example.opentlc.com.key.pem
-wget http://admin.shared.example.opentlc.com/certs/</pre>
+<pre>wget http://www.opentlc.com/rhte-na-certs/${GUID}/wildcard.apps.${GUID}.example.opentlc.com.cert.pem
+wget http://www.opentlc.com/rhte-na-certs/${GUID}/wildcard.apps.${GUID}.example.opentlc.com.key.pem
 </div>
 </div>
 </li>
@@ -1553,11 +1552,11 @@ Empty
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>Get the named certificate, and place it in <code>/root/</code> on your OpenShift Bastion Host.</p>
+<p>Get the named certificate and key, and place it in <code>/root/</code> on your OpenShift Bastion Host.</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-bash" data-lang="bash">wget http://admin.shared.example.opentlc.com/certs/loadbalancer.alb1.example.opentlc.com.cert.pem
-wget http://admin.shared.example.opentlc.com/certs/loadbalancer.alb1.example.opentlc.com.key.pem</code></pre>
+<pre class="highlight"><code class="language-bash" data-lang="bash">wget http://www.opentlc.com/rhte-na-certs/${GUID}/loadbalancer.${GUID}.example.opentlc.com.cert.pem -O /root/loadbalancer.${GUID}.example.opentlc.com.cert.pem
+wget http://www.opentlc.com/rhte-na-certs/${GUID}/loadbalancer.${GUID}.example.opentlc.com.key.pem -O /root/loadbalancer.${GUID}.example.opentlc.com.key.pem</code></pre>
 </div>
 </div>
 </li>
