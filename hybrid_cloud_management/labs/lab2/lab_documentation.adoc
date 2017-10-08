@@ -8,104 +8,126 @@
 
 :numbered:
 
+=== Access Tower
 
-
-== Lab 2 Instructions
-
-. In your browser navigate to your pre-staged Ansible Tower. This is the *ansible1* host. The external URL to point your browser to is https://ansible1-$guid.rhpds.opentlc.com/
+. In your browser navigate to your pre-staged Ansible Tower. This is the *ansible1* host. The external URL to point your browser to is https://ansible1-$GUID.rhpds.opentlc.com/
++
+[IMPORTANT]
+Please replace $GUID with your lab environment's assigned GUID.
 +
 image::images/home_screen.png[]
 
 . Log in as `admin` with the password `r3dh4t1!`
 
-. Create a new inventory named *Lab Hosts* and add *workstation.example.com* to this inventory.
-+
+=== Create Inventory
+
+In this section we will create a new inventory named *Lab Hosts* and add *workstation.example.com* to this inventory.
+
 image::images/inventory_home.png[]
-+
-Navigate to the *Inventories* tab in the Tower UI.
+
+. Navigate to the *Inventories* tab in the Tower UI.
 +
 image::images/inventory_add_shot.png[]
-+
-Click *+Add*. Fill in the name as *Lab Hosts* and for Organization click the find button and select *Default*. Click *Save* to create this inventory.
+
+. Click *+Add*. Fill in the name as *Lab Hosts* and for Organization click the find button and select *Default*. Click *Save* to create this inventory.
 +
 image::images/inventory_add_host_page.png[]
-+
-Once the inventory we need to populate it. In this inventory we will be adding your workstation as a machine to run against. Select *+Add Host*. In host name fill in *workstation.example.com*. Click *Save* to add the workstation to the *Lab Hosts* inventory.
+
+. Once the inventory is created we need to populate it. In this inventory we will be adding your workstation as a machine to run against. 
+.. Select *+Add Host*.
+.. In *HOST NAME* field enter *workstation.example.com*.
+
+.. Click *Save* to add the workstation to the *Lab Hosts* inventory.
 +
 image::images/inventory_add_host_to_list.png[]
 
+=== Copy Playbook Into Ansible Projects Manually
+
 . From your terminal, ssh from the *workstation.example.com* machine to the *ansible1.example.com* host.
 +
-You should have the GIT downloaded to root's home directory. If the directory `/root/rhte-na` does not exist, download it using the following command:
+If the directory `/root/rhte-na` does not exist, download it using the following command:
 +
 ----
-$ git clone https://github.com/redhat-gpe/rhte-na.git
+# git clone https://github.com/redhat-gpe/rhte-na.git
 ----
 
 . Copy the *ws_config.yml* playbook and *roles* directory from the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory into a new directory named *webserver_config* in `/var/lib/awx/projects`
 
-.. Switch to the `/var/lib/awx/projects` directory.
+.. Make the */var/lib/awx/projects/webserver_config* directory.
++
+----
+# mkdir /var/lib/awx/projects/webserver_config
+----
 +
 [NOTE]
-This is the directory where manual projects as well as source controlled project caches get stored.
-+
-----
-$ cd /var/lib/awx/projects
-----
-
-.. Make the *webserver_config* directory.
-+
-----
-$ mkdir webserver_config
-----
+The directory `/var/lib/awx/projects` is where manual projects as well as source controlled project caches get stored.
 
 .. Switch to the `/root/rhte-na/hybrid_cloud_management/labs/lab2/source` directory.
 +
 ----
-$ cd /root/rhte-na/hybrid_cloud_management/labs/lab2/source
+# cd /root/rhte-na/hybrid_cloud_management/labs/lab2/source
 ----
 
 .. Copy the *ws_config.yml* playbook and *roles* directory to the *webserver_config* directory.
 +
 ----
-$ cp ws_config.yml /var/lib/awx/projects/webserver_config
-$ cp roles /var/lib/awx/projects/webserver_config
+# cp ws_config.yml /var/lib/awx/projects/webserver_config
+# cp -r roles /var/lib/awx/projects/webserver_config
 ----
 
 .. Change ownership of the webserver_config folder to `awx`
 +
 ----
-$ chown -R awx:awx /var/lib/awx/projects/webserver_config
+# chown -R awx:awx /var/lib/awx/projects/webserver_config
 ----
 
+=== Create Project
 
-. Create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
-+
+In the section we will create a new project named *Webserver Configuration* which will point to your new project folder in Tower.
+
 image::images/project_home.png[]
-+
-Navigate to the *Projects* tab. Click *+Add*. Fill in the name as *Webserver Configuration*. Click the search button for Organization and select *Default*. For SCM we are going to use *Manual* as the project is pre-populated locally on the Tower server. The directory that the projects are stored is `/var/lib/awx/projects`. For playbook directory select `webserver_config`
+
+. Navigate to the *Projects* tab.
+. Click *+Add*.
+. Fill in the *NAME* as *Webserver Configuration*.
+. Click the search button for Organization and select *Default*.
+. For SCM we are going to use *Manual* as the project is pre-populated locally on the Tower server.
+. The directory that the projects are stored is `/var/lib/awx/projects`. 
+. For playbook directory select `webserver_config`
 +
 image::images/project_new_project.png[]
+. Click *SAVE*
 
-. Create a new credential named *Lab Machines*.
+
+=== Create Credential
+
+In this section we will create a new credential named *Lab Machines*.
+
+. Navigate to the settings tab 
 +
-Navigate to the settings tab.
-+
-image::images/settings_button.png[]
+image:images/settings_button.png[]
 +
 image::images/settings_home.png[]
-+
-Navigate to *Credentials*
+
+. Navigate to *Credentials*
 +
 image::images/credentials_home.png[]
+
+. Click *+ADD*.
+
+. Fill in the *NAME* as *Lab Machines*. 
+. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
+. Fill out the *USERNAME* as `awxservice` which is a local user on the workstation machine.
 +
-Fill in the name as *Lab Machines*. For type select *Machine* as this is going to be the credential that tower uses to SSH to the target host.
-+
-Fill out the username as `awxservice` which is a local user on the workstation machine. Ensure the privilege escalation method is sudo. The `awxservice` service user has the ability to sudo to root to run commands that require priviledge escalation.
+[NOTE]
+The *awxservice* user has the ability to `sudo` to *root* on the *workstation* host to run commands that require priviledge escalation.
+
+. Set *PRIVILEGE ESCALATION* method to *sudo*. 
+. Set *PRIVILEGE ESCALATION USERNAME* to *root*.
 +
 image::images/credential_create.png[]
-+
-For private key, copy and paste the following private ssh key:
+
+. For *PRIVATE KEY*, copy and paste the following private ssh key:
 +
 ----
 -----BEGIN RSA PRIVATE KEY-----
@@ -137,52 +159,87 @@ SkfvR3ErKaYjXKsFvyS2tFSmpAr8fCcGhXbycHwMD6WamkuKDbPwQw==
 -----END RSA PRIVATE KEY-----
 ----
 
-. Create a new Job Template named *Lab Webserver Configuration*.
+. Click *SAVE*
+
+=== Create Job Template
+
+In this section we will create a new Job Template named *Lab Webserver Configuration*.
+
+. Navigate to the *Templates* tab.
+. Click *+ADD* and select `Job Template`.
+. For *NAME* enter *Lab Webserver Configuration*.
+. The *JOB TYPE* should be `Run`.
+. For *INVENTORY*, select the search icon and select the inventory we previously created, `Lab Hosts`
+. For *PROJECT*, select the search icon and select the project we created, `Webserver Configuration`.
+. For *PLAYBOOK* select `ws_config.yml`.
+. For *MACHINE CREDENTIAL* select the `Lab Machines` credential.
 +
-Navigate to the Templates tab.
-+
-Click *+Add* and select `Job Template`.
-+
-image::images/job_template_home_add.png[]
-+
-Fill in *Lab Webserver Configuration* for the name. The Job Type should be `Run`.
+[NOTE]
+Because the playbook itself contains the configuration to escalate to root for it's tasks, we do *not* need to select `Enable Privilege Escalation`.
 +
 image::images/job_template_create.png[]
-+
-For Inventory, select the search icon and select the inventory we previously created, `Lab Hosts`
-+
-For the Project, select the search icon and select the Project we created, `Webserver Configuration`. For the Playbook you will want to select `ws_config.yml`.
-+
-For the Machine Credential we will select the `Lab Machines` credential.
-+
-Because the playbook itself contains the configuration to escalate to root for it's tasks, we do not need to select `Enable Privilege Escalation`.
-+
-Under `Extra Variables` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
+
+. Under `EXTRA VARIABLES` we want to select `Prompt on launch`. This will allow extra variables to be passed to the playbook at instantiation time.
 +
 image::images/job_template_save.png[]
-+
-Finally, select *Save* to create this Job Template.
 
-. Run the *Lab Webserver Configuration* Job Template.
-+
-Navigate to `Templates`.
-+
-Locate the `Lab Webserver Configuration` Job Template and click the run button (this is the rocketship button).
+. Finally, click *SAVE* to create this Job Template.
+
+=== Launch Job Template
+
+In this section we will run the *Lab Webserver Configuration* Job Template.
+
+. Navigate to the `Templates` tab.
+
+. Locate the `Lab Webserver Configuration` Job Template and click the run button (this is the rocketship button).
+.. Do not input any extra variables when prompted.
 +
 image::images/job_template_selection.png[]
+
+.. Click *LAUNCH*.
+
+. Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
+
+=== Verify Job Run
+
+. After the job run is complete, on the workstation host, run the following command:
 +
-Do not input any extra variables when prompted.
+----
+# curl http://localhost
+----
+
+. You should see the following output:
 +
-Observe that when the Job Template was run it is a new Job instance that is actually ran. You should see the ansible playbook log on the right side on the Job window.
+----
+Hello World, I was configured using Ansible!
+----
+
+=== Run Job With Extra Vars
 
 . Run the Job Template again only this time passing in extra variables.
-+
-When prompted for extra variables, input the following YAML into the text box.
+
+.. When prompted for extra variables, input the following YAML into the text box.
 +
 ----
 ---
 body_content: "Hello from the extra vars!"
 ----
+
+=== Verify Job Run With Extra Vars
+
+. After the job run is complete, on the workstation host, run the following command:
++
+----
+# curl http://localhost
+----
+
+. You should see the following output:
++
+----
+Hello from the extra vars!
+----
+
+== Lab 2 Stretch Goal 1
 
 . *Stretch Goal:* Configure LDAP Authentication
 +
