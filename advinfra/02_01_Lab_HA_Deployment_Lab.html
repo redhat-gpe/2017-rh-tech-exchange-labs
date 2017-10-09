@@ -708,10 +708,12 @@ p.tableblock.header { color: #6d6e71; }</style><link rel="stylesheet" href="http
 <h2 id="_connect_to_lab_environment">1. Connect to Lab Environment</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>In this section, you use ssh and the private key to log into the environment required to complete the labs.</p>
+<p>In this section, you use ssh and the private key to log into the environment required to complete the labs and remove the already running OpenShift environment.</p>
 </div>
+
 <div class="olist arabic">
 <ol class="arabic">
+
 <li><p> Download the key as detailed by your instructor and configure on your laptop.</p></li>
 <li><p> Connect to the bastion host as follows:</p></li>
 </ol>
@@ -719,9 +721,22 @@ p.tableblock.header { color: #6d6e71; }</style><link rel="stylesheet" href="http
 
 <div class="listingblock">
 <div class="content">
-<pre class="highlight"><code class="language-text" data-lang="text">
-ssh -i .ssh/${GUID}key ec2-user@bastion.$GUID.example.opentlc.com
-</code></pre>
+<pre class="highlight"><code class="language-text" data-lang="text">ssh -i .ssh/${GUID}key ec2-user@bastion.$GUID.example.opentlc.com</code></pre>
+</div>
+</div>
+
+
+
+<div class="olist arabic">
+<ol class="arabic">
+
+<li><p>Remove the existing OpenShift deployment</p></li>
+</ol>
+</div>
+
+<div class="listingblock">
+<div class="content">
+<pre class="highlight"><code class="language-text" data-lang="text">ansible-playbook /usr/share/ansible/openshift-ansible/playbooks/adhoc/uninstall.yml</code></pre>
 </div>
 </div>
 
