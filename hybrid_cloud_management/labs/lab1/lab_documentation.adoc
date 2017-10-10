@@ -24,13 +24,14 @@ The CloudForms appliance is fully configured with all of the above providers.
 
 === Access Lab Workstation
 
-. Download the lab private SSH key to your system's home directory (key location provided here is just an example):
+. Download the lab private SSH key to your system's home directory (key location provided here is just an example) and change access permissions for the ssh key:
 +
 [source,text]
 ----
 $ curl http://www.opentlc.com/rhte-na/labkey -o ~/.ssh/labkey
+$ chmod 600 ~/.ssh/labkey
 ----
-
+-
 . Use SSH to access the lab workstation as *root* using the lab's private SSH key:
 .. For macOS and Linux users, execute the following:
 +
