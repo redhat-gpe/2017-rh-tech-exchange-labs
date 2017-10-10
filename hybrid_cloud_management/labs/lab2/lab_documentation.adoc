@@ -56,7 +56,7 @@ If the directory `/root/rhte-na` does not exist, download it using the following
 .. Make the */var/lib/awx/projects/webserver_config* directory.
 +
 ----
-# mkdir /var/lib/awx/projects/webserver_config
+# mkdir -p /var/lib/awx/projects/webserver_config
 ----
 +
 [NOTE]
