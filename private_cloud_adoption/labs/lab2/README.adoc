@@ -8,32 +8,12 @@
 :numbered:
 
 == Lab 2 Overivew
-Using the same environment from lab 1, create a second tenant via Ansible playbooks. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly with significant points reduced.
-
-Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
-
-== Access to Lab Environment
-
-Your OpenStack lab environment contains the following:
-
-* Workstation:
-* Controller:
-* Compute1:
-* Compute2:
-* Horizon URL:
-* username: admin
-* password: 
-* external network:
-* external subnet:
-* external floating ip pool:
+Using the same environment from lab 0, create a second tenant via OpenStack CLI. 
 
 === References
 The following resources will be helpful in the labs that follow:
 
-* http://docs.ansible.com/ansible/latest/list_of_cloud_modules.html
-* https://docs.openstack.org/horizon/pike/user/
 * https://docs.openstack.org/python-openstackclient/latest/
-* Example playbook using pure API calls: https://github.com/vvaldez/ansible-openstack-api
 
 === Access Lab Workstation
 
@@ -62,15 +42,545 @@ $ sudo -i
 ----
 
 == Lab Goals
-. Configure tenant 1 via Horizon UI
-. Upload the latest RHEL guest image into the Image service
-. Add custom security group called “Advanced_Ansible_Lab”
-. Enable Ingress ports for icmp, SSH, and whatever is required by your application
-. Create a network called “Advanced_Ansible_Lab”
-. Create a subnet called “Advanced_Ansible_Lab”
-. Create a router called “Advanced_Ansible_Lab” that connects your network to the public network (which has already been created for you) 
-.  Boot a test server
+. Configure tenant 2 via OpenStack CLI
+. Upload the latest RHEL guest image into the Image service that ony this tenant can view
+. Add custom security group called “TATE_CLI”
+. Enable Ingress ports for icmp and SSH
+. Create a network called “TATE_CLI”
+. Create a subnet called “TATE_CLI”
+. Create a router called “TATE_CLI” that connects your network to the public network (which has already been created)
+. Boot a test server
 . Assign a Floating IP to this server
 . Verify you can ping and SSH to this server from outside the OpenStack environment
 . Create a volume and attach it to this server
 . Ensure this volume is visible in the server
+
+== Detailed Steps
+. Create an OpenStack tenant
++
+
+Create a tenant in OpenStack named `TATE_CLI` that will be used during this lab.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_admin)]# openstack project create --description "CLI Tenant" TATE_CLI
++-------------+----------------------------------+
+| Field       | Value                            |
++-------------+----------------------------------+
+| description | Test Tenant                      |
+| enabled     | True                             |
+| id          | 4710f42cf728433bbfcdf06d1a6cc218 |
+| name        | TATE_CLI                      |
++-------------+----------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+. Create an tenant admin user
++
+
+Create an user within the `TATE_CLI` tenant named `tate-cli-admin`.  This user will become the administrator for the `TATE_CLI` tenant.
++
+
+[IMPORTANT]
+Ensure that the password used for this user is recorded for future use.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_admin)]# openstack user create --project TATE_CLI --password-prompt tate-cli-admin
+User Password:
+Repeat User Password:
++------------+----------------------------------+
+| Field      | Value                            |
++------------+----------------------------------+
+| email      | None                             |
+| enabled    | True                             |
+| id         | 634c25060a624ae79960a55f19abe90d |
+| name       | tate-cli-admin                    |
+| project_id | 4710f42cf728433bbfcdf06d1a6cc218 |
+| username   | tate-cli-admin                    |
++------------+----------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+. Assign a user role
++
+
+Assign the user just created, `tate-cli-admin` the `admin` role in the `TATE_CLI` project.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_admin)]# openstack role add --project TATE_CLI --user tate-cli-admin admin
++-----------+----------------------------------+
+| Field     | Value                            |
++-----------+----------------------------------+
+| domain_id | None                             |
+| id        | 958b430460864ab6ae4c2d40cdb9f78a |
+| name      | admin                            |
++-----------+----------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+
+. Create a tenant user
++
+
+Create a user in the `TATE_CLI` project named `tate-cli-user` that will be used for user operations during this lab.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_admin)]# openstack user create --project TATE_CLI --password-prompt tate-cli-user
+User Password:
+Repeat User Password:
++------------+----------------------------------+
+| Field      | Value                            |
++------------+----------------------------------+
+| email      | None                             |
+| enabled    | True                             |
+| id         | 24534f245538427c84b613f277a2fbef |
+| name       | tate-cli-user                     |
+| project_id | 4710f42cf728433bbfcdf06d1a6cc218 |
+| username   | tate-cli-user                     |
++------------+----------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+
+. Create environment files for users
++
+
+Create shell environment files for the users that were just created that store necessary OpenStack authentication variables.  Name the files `rc_tate-cli-admin` and `rc_tate-cli-user`.
+
+
+ifdef::showdetailed[]
++
+.`rc_tate-cli-admin`
+-------------------
+export OS_USERNAME=tate-cli-admin
+export OS_PASSWORD=r3dh4t1!
+export OS_AUTH_URL=http://172.16.7.50:35357/v2.0
+export PS1='[\u@\h \W(tate-cli-admin)]\$ '
+
+export OS_TENANT_NAME=TATE_CLI
+export OS_REGION_NAME=RegionOne
+-------------------
+
+.`rc_tate-cli-user`
+-------------------
+export OS_USERNAME=tate-cli-user
+export OS_PASSWORD=r3dh4t1!
+export OS_AUTH_URL=http://172.16.7.50:35357/v2.0
+export PS1='[\u@\h \W(tate-cli-user)]\$ '
+
+export OS_TENANT_NAME=TATE_CLI
+export OS_REGION_NAME=RegionOne
+-------------------
+
+endif::showdetailed[]
+
+. Create a tenant network
++
+
+Create a network in the `TATE_CLI` project called `TATE_CLI` that will be used by instances
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack network create --project TATE_CLI --internal --no-share TATE_CLI
++---------------------------+--------------------------------------+
+| Field                     | Value                                |
++---------------------------+--------------------------------------+
+| admin_state_up            | UP                                   |
+| availability_zone_hints   |                                      |
+| availability_zones        |                                      |
+| created_at                | 2017-04-30T22:16:41Z                 |
+| description               |                                      |
+| headers                   |                                      |
+| id                        | c6159372-ad02-4e26-b743-10672443d57f |
+| ipv4_address_scope        | None                                 |
+| ipv6_address_scope        | None                                 |
+| mtu                       | 1450                                 |
+| name                      | TATE_CLI                          |
+| project_id                | 4710f42cf728433bbfcdf06d1a6cc218     |
+| project_id                | 4710f42cf728433bbfcdf06d1a6cc218     |
+| provider:network_type     | vxlan                                |
+| provider:physical_network | None                                 |
+| provider:segmentation_id  | 39                                   |
+| revision_number           | 2                                    |
+| router:external           | Internal                             |
+| shared                    | False                                |
+| status                    | ACTIVE                               |
+| subnets                   |                                      |
+| tags                      | []                                   |
+| updated_at                | 2017-04-30T22:16:42Z                 |
++---------------------------+--------------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+. Create a subnet for the tenant network
++
+
+Create a subnet that will be used by instances on the tenant network previously created.  Use the following table for details on the subnet;
++
+
+.Subnet Details
+[width="90%",frame="topbot"]
+|==================
+|Subnet Name | TATE_CLI
+|Network Address | 192.168.56.0/24
+|Gateway | 
+|Allocation Start | 192.168.56.100
+|Allocation End | 192.168.56.200
+|==================
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack subnet create \
+    --project TATE_CLI \
+    --subnet-range 192.168.56.0/24  \
+    --dhcp --gateway 10.43.21.1 \
+    --network TATE_CLI \
+    --allocation-pool start=192.168.56.100,end=192.168.56.200 TATE_CLI
++-------------------+--------------------------------------+
+| Field             | Value                                |
++-------------------+--------------------------------------+
+| allocation_pools  | 192.168.56.100-192.168.56.200        |
+| cidr              | 192.168.56.0/24                      |
+| created_at        | 2017-04-30T22:21:42Z                 |
+| description       |                                      |
+| dns_nameservers   |                                      |
+| enable_dhcp       | True                                 |
+| gateway_ip        | 192.168.56.252                       |
+| headers           |                                      |
+| host_routes       |                                      |
+| id                | 30a9e16d-b8c8-426c-8e3b-5779c512021f |
+| ip_version        | 4                                    |
+| ipv6_address_mode | None                                 |
+| ipv6_ra_mode      | None                                 |
+| name              | TATE_CLI                       |
+| network_id        | c6159372-ad02-4e26-b743-10672443d57f |
+| project_id        | 4710f42cf728433bbfcdf06d1a6cc218     |
+| project_id        | 4710f42cf728433bbfcdf06d1a6cc218     |
+| revision_number   | 2                                    |
+| service_types     | []                                   |
+| subnetpool_id     | None                                 |
+| updated_at        | 2017-04-30T22:21:42Z                 |
++-------------------+--------------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+. Create a router
++
+
+Create a router named `TATE_CLI` in the `TATE_CLI` project.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# openstack router create --project TATE_CLI TATE_CLI
++-------------------------+--------------------------------------+
+| Field                   | Value                                |
++-------------------------+--------------------------------------+
+| admin_state_up          | UP                                   |
+| availability_zone_hints |                                      |
+| availability_zones      |                                      |
+| created_at              | 2017-04-30T22:51:43Z                 |
+| description             |                                      |
+| distributed             | False                                |
+| external_gateway_info   | null                                 |
+| flavor_id               | None                                 |
+| ha                      | False                                |
+| headers                 |                                      |
+| id                      | 6980ef1b-439e-4d8f-aed4-f346bb9024f5 |
+| name                    | TATE_CLI                       |
+| project_id              | 4710f42cf728433bbfcdf06d1a6cc218     |
+| project_id              | 4710f42cf728433bbfcdf06d1a6cc218     |
+| revision_number         | 2                                    |
+| routes                  |                                      |
+| status                  | ACTIVE                               |
+| updated_at              | 2017-04-30T22:51:43Z                 |
++-------------------------+--------------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+
+. Add an interface to the router
++
+
+Add an interface to the `TATE_CLI` on the `TATE_CLI` that will serve as the gateway for that subnet.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# openstack router add subnet TATE_CLI TATE_CLI
+-------------------
+
+endif::showdetailed[]
+
+
+. Validate the network namespace
++
+
+Once the network, subnet, router, and interface have been configured; validate on the controller node that the network namespaces were properly created.
+
+
+ifdef::showdetailed[]
++
+
+First list the network namespaces
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# ip netns list
+qrouter-6980ef1b-439e-4d8f-aed4-f346bb9024f5
+qdhcp-c6159372-ad02-4e26-b743-10672443d57f
+-------------------
+
+The, examine the IP addresses in the network namespace for the `TATE_CLI`.
+
+[NOTE]
+In cases with multiple routers, the string following `qrouter` corresponds to the UUID of the router
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# ip netns exec qrouter-6980ef1b-439e-4d8f-aed4-f346bb9024f5 ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+11: qr-ad087375-4d: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1450 qdisc noqueue state UNKNOWN qlen 1000
+    link/ether fa:16:3e:72:d8:3d brd ff:ff:ff:ff:ff:ff
+    inet 10.43.21.1/24 brd 10.43.21.255 scope global qr-ad087375-4d
+       valid_lft forever preferred_lft forever
+    inet6 fe80::f816:3eff:fe72:d83d/64 scope link
+       valid_lft forever preferred_lft forever
+-------------------
+
+endif::showdetailed[]
+
+
+. Create a SSH keypair
++
+
+Create an SSH keypair, named `TATE_CLI` that can be used to authenticate remote login via SSH using the `cloud-user` account for instances launched.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack keypair create --public-key ~/.ssh/id_rsa.pub TATE_CLI
++-------------+-------------------------------------------------+
+| Field       | Value                                           |
++-------------+-------------------------------------------------+
+| fingerprint | 2a:f7:e7:c5:dd:33:2e:77:e8:95:fa:e0:4e:74:02:ff |
+| name        | TATE_CLI                                 |
+| user_id     | 634c25060a624ae79960a55f19abe90d                |
++-------------+-------------------------------------------------+
+
+-------------------
+
+endif::showdetailed[]
+
+. Create a security group
++
+
+Create a security group named `TATE_CLI` in the `TATE_CLI` project, that permits SSH traffic from any source into any instance running on the `TATE_CLI`.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack security group create --project TATE_CLI TATE_CLI
++-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Field           | Value                                                                                                                                                                               |
++-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| created_at      | 2017-04-30T22:26:39Z                                                                                                                                                                |
+| description     | TATE_CLI                                                                                                                                                                    |
+| headers         |                                                                                                                                                                                     |
+| id              | 8d121d0b-b7be-4e2b-9f9b-da33bb0e345d                                                                                                                                                |
+| name            | TATE_CLI                                                                                                                                                                    |
+| project_id      | 4710f42cf728433bbfcdf06d1a6cc218                                                                                                                                                    |
+| project_id      | 4710f42cf728433bbfcdf06d1a6cc218                                                                                                                                                    |
+| revision_number | 1                                                                                                                                                                                   |
+| rules           | created_at='2017-04-30T22:26:39Z', direction='egress', ethertype='IPv4', id='528a47f0-e592-460d-9a94-5233fce04ae6', project_id='4710f42cf728433bbfcdf06d1a6cc218',                  |
+|                 | revision_number='1', updated_at='2017-04-30T22:26:39Z'                                                                                                                              |
+|                 | created_at='2017-04-30T22:26:39Z', direction='egress', ethertype='IPv6', id='aece3442-cf46-46e3-8502-10673bd77e5a', project_id='4710f42cf728433bbfcdf06d1a6cc218',                  |
+|                 | revision_number='1', updated_at='2017-04-30T22:26:39Z'                                                                                                                              |
+| updated_at      | 2017-04-30T22:26:39Z                                                                                                                                                                |
++-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack security group rule create --src-ip 0.0.0.0/0 --dst-port 22 --protocol tcp --ingress --project TATE_CLI TATE_CLI
++-------------------+--------------------------------------+
+| Field             | Value                                |
++-------------------+--------------------------------------+
+| created_at        | 2017-04-30T22:28:17Z                 |
+| description       |                                      |
+| direction         | ingress                              |
+| ethertype         | IPv4                                 |
+| headers           |                                      |
+| id                | b2e4f0a7-4372-487e-8982-7ca7cae5eebc |
+| port_range_max    | 22                                   |
+| port_range_min    | 22                                   |
+| project_id        | 4710f42cf728433bbfcdf06d1a6cc218     |
+| project_id        | 4710f42cf728433bbfcdf06d1a6cc218     |
+| protocol          | tcp                                  |
+| remote_group_id   | None                                 |
+| remote_ip_prefix  | 0.0.0.0/0                            |
+| revision_number   | 1                                    |
+| security_group_id | 8d121d0b-b7be-4e2b-9f9b-da33bb0e345d |
+| updated_at        | 2017-04-30T22:28:17Z                 |
++-------------------+--------------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+
+. Create a Glance image
++
+
+Create a Glance image, using the RHEL7 Cloud Image, named `rhel7-guest`.  The RHEL7 Cloud image qcow2 file can be downloaded from `access.redhat.com`.
+
+[NOTE]
+If an account with appropriate permissions is not available, please check with the course instructor for an alternative download location.
+
+
+ifdef::showdetailed[]
+
+-------------------
+[root@ctrl01 ~(keystone_tate-cli-admin)]# openstack image create --container-format bare --disk-format qcow2 --file rhel7-guest.qcow2 --project TATE_CLI rhel7-guest
++------------------+------------------------------------------------------+
+| Field            | Value                                                |
++------------------+------------------------------------------------------+
+| checksum         | 0bfff47b55a9428c83d2235da9d470de                     |
+| container_format | bare                                                 |
+| created_at       | 2017-04-30T22:37:16Z                                 |
+| disk_format      | qcow2                                                |
+| file             | /v2/images/ba3c75a6-0c41-42d5-9ebf-dbef0c909399/file |
+| id               | ba3c75a6-0c41-42d5-9ebf-dbef0c909399                 |
+| min_disk         | 0                                                    |
+| min_ram          | 0                                                    |
+| name             | rhel7-guest                                          |
+| owner            | 4710f42cf728433bbfcdf06d1a6cc218                     |
+| protected        | False                                                |
+| schema           | /v2/schemas/image                                    |
+| size             | 562851840                                            |
+| status           | active                                               |
+| tags             |                                                      |
+| updated_at       | 2017-04-30T22:37:24Z                                 |
+| virtual_size     | None                                                 |
+| visibility       | private                                              |
++------------------+------------------------------------------------------+
+-------------------
+
+endif::showdetailed[]
+
+
+
+
+. Create a test instance
++
+
+Create a test instnance so that all settings just configured can be validated.
+
+
+ifdef::showdetailed[]
++
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# openstack server create \
+    --image rhel7-guest \
+    --flavor m1.small \
+    --security-group TATE_CLI \
+    --key-name TATE_CLI \
+    --nic net-id=c6159372-ad02-4e26-b743-10672443d57f example-rhel7
++--------------------------------------+----------------------------------------------------+
+| Field                                | Value                                              |
++--------------------------------------+----------------------------------------------------+
+| OS-DCF:diskConfig                    | MANUAL                                             |
+| OS-EXT-AZ:availability_zone          |                                                    |
+| OS-EXT-SRV-ATTR:host                 | None                                               |
+| OS-EXT-SRV-ATTR:hypervisor_hostname  | None                                               |
+| OS-EXT-SRV-ATTR:instance_name        |                                                    |
+| OS-EXT-STS:power_state               | NOSTATE                                            |
+| OS-EXT-STS:task_state                | scheduling                                         |
+| OS-EXT-STS:vm_state                  | building                                           |
+| OS-SRV-USG:launched_at               | None                                               |
+| OS-SRV-USG:terminated_at             | None                                               |
+| accessIPv4                           |                                                    |
+| accessIPv6                           |                                                    |
+| addresses                            |                                                    |
+| adminPass                            | ATeh3nLiuy9k                                       |
+| config_drive                         |                                                    |
+| created                              | 2017-04-30T22:47:37Z                               |
+| flavor                               | m1.small (2)                                       |
+| hostId                               |                                                    |
+| id                                   | 760b58cc-d23b-4d1b-b303-8937da083b43               |
+| image                                | rhel7-guest (ba3c75a6-0c41-42d5-9ebf-dbef0c909399) |
+| key_name                             | TATE_CLI                                    |
+| name                                 | example-rhel7                                      |
+| os-extended-volumes:volumes_attached | []                                                 |
+| progress                             | 0                                                  |
+| project_id                           | 4710f42cf728433bbfcdf06d1a6cc218                   |
+| properties                           |                                                    |
+| security_groups                      | [{u'name': u'TATE_CLI'}]                   |
+| status                               | BUILD                                              |
+| updated                              | 2017-04-30T22:47:38Z                               |
+| user_id                              | 634c25060a624ae79960a55f19abe90d                   |
++--------------------------------------+----------------------------------------------------+
+
+-------------------
+
+endif::showdetailed[]
+
+
+. Log into the test instance
++
+
+Once the instance has become active, use the `TATE_CLI` network namespace to SSH into the instance.  Use the `TATE_CLI` created previously to authenticate.
+
+[NOTE]
+It may take some time for the instance to become active and accept logins, due largely to the nested virtualization utilized in the lab environment.  Monitor instance state using the `openstack server list` and `openstack server show` commands
+
+
+ifdef::showdetailed[]
+
+-------------------
+[root@ctrl01 nova(keystone_tate-cli-admin)]# ip netns exec qrouter-6980ef1b-439e-4d8f-aed4-f346bb9024f5 ssh -l cloud-user -i ~/.ssh/id_rsa 10.43.21.17
+The authenticity of host '10.43.21.17 (10.43.21.17)' can't be established.
+ECDSA key fingerprint is 51:e0:12:4a:97:e3:f4:c5:1f:b6:c7:bf:0e:78:84:37.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '10.43.21.17' (ECDSA) to the list of known hosts.
+[cloud-user@example-rhel7 ~]$
+-------------------
+
+endif::showdetailed[]
+

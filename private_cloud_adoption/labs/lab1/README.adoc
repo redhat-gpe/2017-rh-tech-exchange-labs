@@ -10,66 +10,213 @@
 == Lab 1 Overivew
 In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use a developer. This first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner.
 
-TIP: If you are already familiar with this process you may skip the instructions and do this on your own. As a bonus, you may alternatively write a bash script instead of using the Horizon UI.
-
-== Access to Lab Environment
-
-Your OpenStack lab environment contains the following:
-
-* Workstation:
-* Controller:
-* Compute1:
-* Compute2:
-* Horizon URL:
-* username: admin
-* password: 
-* external network:
-* external subnet:
-* external floating ip pool:
-
 === References
 The following resources will be helpful in the labs that follow:
 
 * https://docs.openstack.org/horizon/pike/user/
-* https://docs.openstack.org/python-openstackclient/latest/
 
-=== Access Lab Workstation
+=== Access Controller
 
-. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
-.. For macOS and Linux users, execute the following:
-+
-[source,text]
-----
-$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
-----
-+
-[NOTE]
-Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
-
-.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
-+
-[IMPORTANT]
-To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
-
-. After logging in, make sure you can become `root` on the lab workstation:
-+
-[source,text]
-----
-$ sudo -i
-#
-----
+* http://ctrl01-$GUID.rhpds.opentlc.com
+* username: admin
+* password: <instructor will provide>
 
 == Lab Goals
-. Configure external network
-. Configure tenant 1 via Horizon UI
-. Upload the latest RHEL guest image into the Image service
-. Add custom security group called “Advanced_Ansible_Lab”
-. Enable Ingress ports for icmp, SSH, and whatever is required by your application
-. Create a network called “Advanced_Ansible_Lab”
-. Create a subnet called “Advanced_Ansible_Lab”
-. Create a router called “Advanced_Ansible_Lab” that connects your network to the public network (which has already been created for you) 
-.  Boot a test server
+. Create an external network as detailed in lab0
+. Configure tenant 1 via Horizon UI called "TATE_UI"
+. Upload the latest RHEL guest image into the Image service only visible to this tenant
+. Add custom security group called “TATE_UI”
+. Enable Ingress ports for icmp and SSH
+. Create a network called “TATE_UI”
+. Create a subnet called “TATE_UI”
+. Create a router called “TATE_UI” that connects your network to the public network
+. Boot a test server
 . Assign a Floating IP to this server
 . Verify you can ping and SSH to this server from outside the OpenStack environment
 . Create a volume and attach it to this server
 . Ensure this volume is visible in the server
+
+== Detailed Steps
+TIP: If you are already familiar with this process you are highly encouraged to skip the instructions and do this on your own. 
+
+=== User and Project Creation
+
+. Login to the Horizon UI as *admin* 
++
+. Create a new project
+.. Choose +Identity+ in the primary menu bar at the top
+.. Select +Projects+ in the tertiary menu bar
+.. Choose +Create Project+ in the upper right named something like +TATE_UI+
+.. Provide a name for a project
+. Create a new user
+.. Select +Users+ in the tertiary bar
+.. Select +Create User+ in the upper right named something like +TATE_UI+
+.. Create a new user and add it to the newly created project with the default role `_member_`
+
+=== Neutron External Network Configuration
+
+IMPORTANT: Perform these steps as *admin*
+
+. Create a network
+.. Select +Admin+ in the primary menu bar at the top
+.. Select +Networks+ in the tertiary menu bar
+.. Select +Create Network+ button in the top right in the main panel
+.. Use the name _external_ or similar
+.. Select _services_ for project
+.. Select _Flat_ for +Network Provider Type+
+.. Select +External Network+ and finally +Create Network+
++
+NOTE: Do **NOT** select *shared* at this time.
++
+. Create a subnet
+.. Select the previously created external network under +Network Name+ column on the left to reveal details about the network
+.. Select +Create Subnet+ button on the right side mid-way down
+.. Use the Subnet name of _external_
+.. For +Network Address+: 192.168.56.0/24
+.. For +Gateway IP+ leave it blank 
+.. Select +Next+ to fill out +Subnet Detail+
+.. Uncheck +Enable DHCP+ as this is the external network and there is already a DHCP server on the external network (which is currently your laptop)
+.. For +Allocation Pools+ specify a range as provided by instructor
+.. +Create+ the subnet
+
+[[Project_User_Operations]]
+== Project/Tenant User Operations
+
+. Logout as admin in the top right
+. Login as the new user
+
+NOTE: *The remainder of these steps will be done as this user*
+
+=== Create SSH KeyPair
+
+A public/private keypair will be used to allow SSH access to instances. The public key is injected to the instances.
+
+. Select +Project+ in the primary menu bar
+. Select +Compute+ in the secondary menu bar
+. Choose +Access & Security+ in the tertiary menu bar
+. Choose +Keypairs+ in the main panel (second tab over)
+. Select +Create Key Pair+ in the upper right
++
+NOTE: An existing public SSH key can be imported instead of creating a new one
++
+. The new keypair will attempt to download automatically. If needed, use the link to download the private key. This is the private key that will be used to access instances. The public key will be injected into each instance.
+. Set the proper permissions on the private key
++
+----
+chmod 600 <downloaded_user_key>.pem
+----
+
+=== Image Management
+
+Upload an image to spawn instances from.
+
+. Select +Project+ in the primary menu bar
+. Select +Compute+ in the secondary menu bar
+. Select +Images+
+. In the upper right select +Create Image+
+. Provide a name and for +Image Location+ provide the link to the latest CirrOS image from:
++
+http://download.cirros-cloud.net/
++
+. Select +QCOW2+ for +Format+
++
+NOTE: If direct upload fails, first download the image locally then browse to it.
++
+. To add a RHEL image, download one from https://access.redhat.com/downloads/content/69/ver=/rhel---7/x86_64/product-downloads or install one via `yum install rhel-guest-image-7`
+
+=== Network Management
+
+NOTE: Perform these steps as the project/tenant user for a Neutron deployment
+
+. Create a network
+.. At the top select +Project+
+.. In the secondary bar select +Network+ then +Networks+
+.. Select +Create Network+ button in the top right in the main panel
+.. Provide a name such as _private_ or similar
+.. Under Subnet tab provide a name such as private and choose +Next+
+. Create a subnet
+.. Provide a name for the subnet such as _private_
+.. For +Network Address+ make up a new private network that does not conflict with a real network on these systems
+.. Leave the rest of the values as default
+.. Select +Next+ to provide +Subnet Details+
+.. Leave +Enable DHCP+ checked as it will provide IPs for the instances on this private network
+.. Leave Allocation Pools blank as the private subnet will not provide any floating IPs
+.. For +DNS Name Servers+ use 192.168.56.252
+.. Select +Create+ to complete the network and subnet creation
+. Create a router
+.. In the tertiary menu bar select +Routers+
+.. Select +Create Router+ in the upper right and provide a name
+.. For _external_network_ choose the _external_ network created by Admin 
+.. Click on the router name that was just created to reveal details about the router
+.. Click +Interfaces+
+.. Select +Add Interface+ 
+.. Select the private subnet created and click +Add interface+
+. View the new network topology
+.. In the tertiary bar choose +Network Topology+
+.. Your topology should look similar to the following:
+
+[[Launch_An_Instance_GUI]]
+=== Launch An Instance
+
+. Select +Project+ in the primary menu bar
+. Select +Compute+ in the secondary menu bar
+. Select +Instances+ in the tertiary menu bar
+. Choose +Launch Instance+ in the top right of the main panel
+. Choose a name for the new instance
+. For flavor use *m1.small* for the rhel-guest-image-7 or *m1.tiny* for cirros
+. For +Instance Boot Source+ select +Boot from Image+
+. Under +Image Name+ select the desired image
+. For +Access & Security+ the key you created earlier should be selected
+. For +Networking+ the private network should be selected
++
+NOTE: The instance should only see the private network unless the external network was shared.
++
+. Click +Launch+ to launch the new instance
+
+=== Assign A Floating IP
+
+. Allocate a Floating IP
+.. Select +Project+ in the primary menu bar
+.. Select +Compute+ in the secondary menu bar
+.. Select +Access & Security+ in the tertiary menu bar
+.. Choose +Floating IPs+ in the main panel
+.. Choose +Allocate IP to Project+ in the upper right in the main panel
+.. The +Pool+ should be set to the +external+ network
+.. Select +Allocate IP+ to create the floating IP and reserve it for use by this project
++
+NOTE: Now that you know the long way, you can also do it directly from the +Associate+ menu below by clicking the +
++
+. Associate floating IP instance
+.. Select +Instances+ in the tertiary menu bar (or go to +Project+ -> +Compute+ -> +Instances+)
+.. For an instance select +More+ under +Actions+ to the right (you can also allocate an IP from this menu) 
+.. Choose +Associate Floating IP+
+.. Select an available floating IP address from the list
+.. The instance and private IP should be selected for +Port to be associated+ 
+.. Click +Associate+
+.. Click on the instance name to view the details, log or console
+
+NOTE: It make take a few minutes for the log or console to show up, when read the state will change from spawning.
+
+=== Add Security Group Rules
+
+. Add rule for ICMP
+.. Select +Project+ in the primary menu bar
+.. Select +Compute+ in the secondary menu bar
+.. Select +Access & Security+ in the tertiary menu bar
+.. Under +Actions+ choose +Manage Rules+ in the main panel for the +default+ security group
+.. Choose +Add Rule+ in the upper right
+.. For +Rule+ choose +ALL ICMP+
+. Add rule for SSH
+.. Choose +Add Rule+ in the upper right
+.. For +Rule+ choose +SSH+
+
+=== Add Block Volume
+
+. Select +Project+ in the primary menu bar
+. Select +Compute+ in the secondary menu bar
+. Select +Volumes+ in the tertiary menu bar
+. Click +Create Volume+
+. Accept defaults and create the volumes
+. Select the drop-down arrow next to the volume on the right and choose +Manage Attachments+
+. Select your instance
+. Verify the volume is attached inside the instance

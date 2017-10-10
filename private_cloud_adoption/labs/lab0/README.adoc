@@ -1,0 +1,90 @@
+:author: Red Hat Global Partner & Technical Enablement
+:sectnums!:
+:hardbreaks:
+:scrollbar:
+:data-uri:
+:toc2:
+:showdetailed:
+
+= Private Cloud Adoption - Lab 0
+
+== Spinning Up OpenStack
+. Login to https://labs.opentlc.com/
+. Select `Services -> Catalogs`
+. Expand `OPENTL Cloud Infrastructure`
+. Order `Red Hat Tech Exchange OSP10`
+. Check your email to obtain unique hostname
+
+== Access to Lab Environment
+
+Your OpenStack lab environment contains the following:
+
+* Workstation external DNS: workstation-$GUID.rhpds.opentlc.com 
+* Workstation internal IP: 172.16.7.252
+* Controller: 172.16.7.50
+* Compute1: 172.16.7.51
+* Compute2: 172.16.7.52
+* Horizon external URL: http://ctrl01-$GUID.rhpds.opentlc.com
+* username: admin
+* password: <instructor will provide>
+* external network: flat
+* external subnet: 192.168.56.0/24 DNS: 192.168.56.252
+* external floating ip pool: <instructor will provide>
+
+=== Access Lab Workstation
+
+. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+----
++
+[NOTE]
+Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
++
+[IMPORTANT]
+To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
+
+. After logging in, make sure you can become `root` on the lab workstation:
++
+[source,text]
+----
+$ sudo -i
+#
+----
+
+== Pre-lab coniguration
+Due to some last minute changes the following changes are needed in your enviroments before we beging the rest of the labs.
+
+=== Configure Horizon Vhost
+. Edit `/etc/httpd/conf.d/15-horizon_vhost.conf`
+. Add your controller's public hostname to this file somewhere between lines 31 and 34:
++
+[source,text]
+----
+ServerAlias ctrl01-$GUID.rhpds.opentlc.com
+----
++
+. Restart httpd with `systemctl restart httpd`
+
+=== Enable Flat type for External Network
+
+. Edit `/root/answers.txt`
+. On line 840 edit the entry to add `flat` as such:
++
+[source,text]
+----
+CONFIG_NEUTRON_ML2_TYPE_DRIVERS=flat,vxlan
+----
++
+. Connect to the controller and both compute nodes and edit `/etc/yum.repos.d/open.repo`
+. Remove the all repos for `ceph` after line 60
+. Run `PackStack` as such:
++
+----
+packstack --answer-file=/root/answers.txt
+----
