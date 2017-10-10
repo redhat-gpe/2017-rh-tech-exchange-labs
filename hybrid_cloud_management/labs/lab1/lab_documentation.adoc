@@ -343,6 +343,9 @@ This playbook should be able to run idempotently. It should also run against the
 
 .. Make sure you are logged directly into the *workstation.example.com* host as *root*.
 .. Download the installer in `/root`:
+[NOTE]
+Ensure you are on *workstation.example.com* and not on ansible1
+
 +
 ----
 # cd /root
