@@ -8,12 +8,17 @@
 :numbered:
 
 == Overivew
-In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use by two different tenants. The first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner. The second tenant will be scripted. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly.
+In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use by three different tenants. 
 
-Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
+The first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner. 
+
+The second tenant will be added via the OpenStack CLI. Again, steps will be provided for those new to OpenStack but it is highly encouraged that users use our docs or --help from the command to work through this challenge.
+
+The last tenant will be added via Ansible playbook(s). This lab will not provide answers and is more about Ansible than OpenStack. Students will use the Ansible Cloud Modules reference for specific details on modules. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
 
 == Lab Goals
-* Configure OpenStack environment with an external network
-* Configure tenant 1 via Horizon UI
-* Configure tenant 2 via Ansible playbooks (or CLI or API)
-* Stretch Lab: CloudForms to manage OSP
+* Provision OpenStack environment
+* Configure tenant 1 via Horizon UI and setup an external network
+* Configure tenant 2 via OpenStack CLI
+* Configure tenant 3 via Ansible playbooks
+* Stretch Lab: Ansible playbooks to teardown OpenStack environment

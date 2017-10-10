@@ -1,0 +1,84 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+
+= Private Cloud Adoption - Lab 3
+
+:numbered:
+
+== Lab 3 Overivew
+Using the same environment from lab 0, create a second tenant via Ansible playbooks. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly with significant points reduced.
+
+Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.
+
+=== References
+The following resources will be helpful in the labs that follow:
+
+* http://docs.ansible.com/ansible/latest/list_of_cloud_modules.html
+* Example playbook using pure API calls: https://github.com/vvaldez/ansible-openstack-api
+
+=== Access Lab Workstation
+
+. Use SSH to access the lab workstation using your private SSH key and OPENTLC SSO credentials:
+.. For macOS and Linux users, execute the following:
++
+[source,text]
+----
+$ ssh -i /path/to/your/ssh-key your-opentlc-sso-login@workstation-$GUID.rhpds.opentlc.com
+----
++
+[NOTE]
+Replace `$GUID` with your lab environment GUID provided in the provisioning email you received when ordering.  Replace `your-opentlc-sso-login` with your OPENTLC SSO user name.
+
+.. For Windows users, consult link:https://www.opentlc.com/ssh.html[this page^] for documentation on using PuTTY.
++
+[IMPORTANT]
+To avoid problems when using SSH to access your OPENTLC lab hosts, always use the FQDN host name and not the IP or Ravello DNS entry.
+
+. After logging in, make sure you can become `root` on the lab workstation:
++
+[source,text]
+----
+$ sudo -i
+#
+----
+
+== Preparation
+. Install Ansible on your workstation VM:
++
+----
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum install -y python python-devel python-pip gcc ansible
+pip install shade
+----
++
+. Verify Ansible installation
++
+----
+ansible --version
+----
+
+== Lab Goals
+. Configure tenant 1 via Horizon UI
+. Upload the latest RHEL guest image into the Image service only visible to this tenant
+. Add custom security group called “TATE_ANSIBLE”
+. Enable Ingress ports for icmp, SSH, and whatever is required by your application
+. Create a network called “TATE_ANSIBLE”
+. Create a subnet called “TATE_ANSIBLE”
+. Create a router called “TATE_ANSIBLE” that connects your network to the public network (which has already been created)
+.  Boot a test server
+. Assign a Floating IP to this server
+. Verify you can ping and SSH to this server from outside the OpenStack environment
+. Create a volume and attach it to this server
+. Ensure this volume is visible in the server
+. Follow Ansible best practices
+.. Separate data and logic so all variables can be defined in a single external yaml file
+.. Use a role for bonus points
+.. Avoid using any `shell` or `command` module calls or else.
+
+== Stretch Goal
+. Create a playbook to completely teardown the previous playbook configuration.
+. To verify, ensure the "TATE_ANSIBLE" tenant project is gone and all objects.
+. Re-run your original playbook to ensure everything is once again configured
+. Re-run your teardown playbook again
