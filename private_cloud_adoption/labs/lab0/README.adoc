@@ -29,7 +29,7 @@ Your OpenStack lab environment contains the following:
 * password: <instructor will provide>
 * external network: flat
 * external subnet: 192.168.56.0/24 DNS: 192.168.56.252
-* external floating ip pool: <instructor will provide>
+* external floating ip pool: 192.168.56.100 - 192.168.56.200
 
 === Access Lab Workstation
 
@@ -60,17 +60,6 @@ $ sudo -i
 == Pre-lab coniguration
 Due to some last minute changes the following changes are needed in your enviroments before we beging the rest of the labs.
 
-=== Configure Horizon Vhost
-. Edit `/etc/httpd/conf.d/15-horizon_vhost.conf`
-. Add your controller's public hostname to this file somewhere between lines 31 and 34:
-+
-[source,text]
-----
-ServerAlias ctrl01-$GUID.rhpds.opentlc.com
-----
-+
-. Restart httpd with `systemctl restart httpd`
-
 === Enable Flat type for External Network
 
 . Edit `/root/answers.txt`
@@ -88,3 +77,16 @@ CONFIG_NEUTRON_ML2_TYPE_DRIVERS=flat,vxlan
 ----
 packstack --answer-file=/root/answers.txt
 ----
+
+=== Configure Horizon Vhost
+In order to reach your Horizon host via it's public DNS name, add it as an alias so httpd is aware of it:
+
+. Edit `/etc/httpd/conf.d/15-horizon_vhost.conf`
+. Add your controller's public hostname to this file somewhere between lines 31 and 34:
++
+[source,text]
+----
+ServerAlias ctrl01-$GUID.rhpds.opentlc.com
+----
++
+. Restart httpd with `systemctl restart httpd`
