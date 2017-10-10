@@ -60,6 +60,24 @@ $ sudo -i
 == Pre-lab coniguration
 Due to some last minute changes the following changes are needed in your enviroments before we beging the rest of the labs.
 
+=== Enable Flat type for External Network
+
+. Edit `/root/answers.txt`
+. On line 840 edit the entry to add `flat` as such:
++
+[source,text]
+----
+CONFIG_NEUTRON_ML2_TYPE_DRIVERS=flat,vxlan
+----
++
+. Connect to the controller and both compute nodes and edit `/etc/yum.repos.d/open.repo`
+. Remove the all repos for `ceph` after line 60
+. Run `PackStack` as such:
++
+----
+packstack --answer-file=/root/answers.txt
+----
+
 === Configure Horizon Vhost
 In order to reach your Horizon host via it's public DNS name, add it as an alias so httpd is aware of it:
 
