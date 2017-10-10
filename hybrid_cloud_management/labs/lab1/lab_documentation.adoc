@@ -344,7 +344,7 @@ $ ansible-playbook -i inventory playbook2.yml
 
 . *Stretch Goal 1:* Create a new playbook named *playbook3.yml* to create a new user and place a file in the user's home directory.
 +
-Use the previous playbooks as well as the included module documentation for reference. The user should be named *consultant1* and in a primary group of *consultants*. The home directory should be */home/consultant*. The file should be called *hello_ansible.txt* located in */home/consultant*. The content of the file should be `"Hello World, from Ansible."`
+Use the previous playbooks as well as the included module documentation for reference. The user should be named *consultant1* and in a primary group of *consultant*. The home directory should be */home/consultant*. The file should be called *hello_ansible.txt* located in */home/consultant*. The content of the file should be `"Hello World, from Ansible."`
 +
 This playbook should be able to run idempotently. It should also run against the host: *workstation.example.com* but executed on *ansible1.example.com*.
 
