@@ -263,7 +263,7 @@ image::images/ldap_config.png[]
 
 .. Set the LDAP BIND PASSWORD to *passw0rd*
 
-.. Set the LDAP GROUP TYPE to `GroupOfUniqueNames`
+.. Set the LDAP GROUP TYPE to `GroupOfUniqueNamesType`
 
 .. Set LDAP USER SEARCH to the following in order to set the search DN, the scope, and the attribute which should be mapped to the username to sign in with.
 +
