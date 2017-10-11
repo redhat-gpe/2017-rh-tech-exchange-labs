@@ -18,7 +18,7 @@ The following resources will be helpful in the labs that follow:
 
 === Access Controller
 
-* http://ctrl01-$GUID.rhpds.opentlc.com
+* https://ctrl-$GUID.rhpds.opentlc.com
 * username: admin
 * password: <instructor will provide>
 
@@ -52,7 +52,6 @@ TIP: If you are already familiar with this process you are highly encouraged to 
 .. Select +Users+ in the tertiary bar
 .. Select +Create User+ in the upper right named something like +TATE_UI+
 .. Create a new user and add it to the newly created project with the default role `_member_`
-
 
 [[Project_User_Operations]]
 == Project/Tenant User Operations
@@ -92,7 +91,7 @@ NOTE: Perform these steps as the project/tenant user for a Neutron deployment
 .. Select +Create Network+ button in the top right in the main panel
 .. Provide a name such as _private_ or similar
 .. Under Subnet tab provide a name such as _private_ and choose +Next+
-.. For +Network Address+ specify CIDR like 10.10.10.0/24
+.. For +Network Address+ specify CIDR that is non-routable, something like 10.10.10.0/24
 .. Leave the rest of the values as default
 .. Select +Next+ to provide +Subnet Details+
 .. Leave +Enable DHCP+ checked as it will provide IPs for the instances on this private network

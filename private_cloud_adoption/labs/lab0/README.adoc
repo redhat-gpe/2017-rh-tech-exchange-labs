@@ -72,15 +72,7 @@ $ sudo -i
 == Pre-lab coniguration
 Due to some last minute changes the following changes are needed in your enviroments before we beging the rest of the labs.
 
-=== Configure Horizon Vhost
-In order to reach your Horizon host via it's public DNS name, add it as an alias so httpd is aware of it:
-
-. Edit `/etc/httpd/conf.d/15-horizon_vhost.conf`
-. Add your controller's public hostname to this file somewhere between lines 31 and 34:
-+
-[source,text]
-----
-ServerAlias ctrl-$GUID.rhpds.opentlc.com
-----
-+
-. Restart httpd with `systemctl restart httpd`
+=== Disable Shared External Network
+. Disable `shared` property on `public` network
+.. This is easily accomplished via Horizon as admin
+.. This can also be completed as admi via the OpenStack CLI
