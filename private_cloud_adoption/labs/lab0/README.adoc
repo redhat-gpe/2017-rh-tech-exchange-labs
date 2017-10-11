@@ -21,14 +21,14 @@ Your OpenStack lab environment contains the following:
 
 * External hostnames, IP addresses, Ports:
 ** Workstation: workstation-$GUID.rhpds.opentlc.com / see IP address in e-mail / Port 22 (ssh)
-** Controller: ctrl01-$GUID.rhpds.opentlc.com / see IP address in e-mail / Ports 80,443 (http/https), 6080 (novnc)
-** Horizon external URL: https://ctrl01-$GUID.rhpds.opentlc.com
+** Controller: ctrl-$GUID.rhpds.opentlc.com / see IP address in e-mail / Ports 80,443 (http/https), 6080 (novnc)
+** Horizon external URL: https://ctrl-$GUID.rhpds.opentlc.com
 *** Username: admin
 *** Password: <instructor will provide>
 
 * Internal hostnames, IP addresses:
 ** Workstation: workstation.example.com 192.168.0.5
-** Controller: ctrl01.example.com 192.168.0.20
+** Controller: ctrl.example.com 192.168.0.20
 ** Compute0: comp00.example.com 192.168.0.30
 ** Compute1: comp01.example.com 192.168.0.31
 ** Server: server.example.com 192.168.0.80
@@ -80,7 +80,7 @@ In order to reach your Horizon host via it's public DNS name, add it as an alias
 +
 [source,text]
 ----
-ServerAlias ctrl01-$GUID.rhpds.opentlc.com
+ServerAlias ctrl-$GUID.rhpds.opentlc.com
 ----
 +
 . Restart httpd with `systemctl restart httpd`
