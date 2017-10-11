@@ -18,7 +18,7 @@ The last tenant will be added via Ansible playbook(s). This lab will not provide
 
 == Lab Goals
 * Provision OpenStack environment
-* Configure tenant 1 via Horizon UI and setup an external network
+* Configure tenant 1 via Horizon UI
 * Configure tenant 2 via OpenStack CLI
 * Configure tenant 3 via Ansible playbooks
 * Stretch Lab: Ansible playbooks to teardown OpenStack environment
