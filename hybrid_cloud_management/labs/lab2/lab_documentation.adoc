@@ -259,7 +259,7 @@ image::images/ldap_config.png[]
 
 .. Set the LDAP SERVER URI to `ldap://ansible1.example.com:389`
 
-.. Set the LDAP BIND DN to *tower*
+.. Set the LDAP BIND DN to *uid=tower,ou=people,dc=example,dc=com*
 
 .. Set the LDAP BIND PASSWORD to *passw0rd*
 
