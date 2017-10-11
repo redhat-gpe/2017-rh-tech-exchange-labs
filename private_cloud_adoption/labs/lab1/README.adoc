@@ -91,24 +91,23 @@ NOTE: Perform these steps as the project/tenant user for a Neutron deployment
 .. In the secondary bar select +Network+ then +Networks+
 .. Select +Create Network+ button in the top right in the main panel
 .. Provide a name such as _private_ or similar
-.. Under Subnet tab provide a name such as private and choose +Next+
-. Create a subnet
-.. Provide a name for the subnet such as _private_
-.. For +Network Address+ make up a new private network that does not conflict with a real network on these systems
+.. Under Subnet tab provide a name such as _private_ and choose +Next+
+.. For +Network Address+ specify CIDR like 10.10.10.0/24
 .. Leave the rest of the values as default
 .. Select +Next+ to provide +Subnet Details+
 .. Leave +Enable DHCP+ checked as it will provide IPs for the instances on this private network
 .. Leave Allocation Pools blank as the private subnet will not provide any floating IPs
 .. For +DNS Name Servers+ use 8.8.8.8
 .. Select +Create+ to complete the network and subnet creation
+
 . Create a router
 .. In the tertiary menu bar select +Routers+
 .. Select +Create Router+ in the upper right and provide a name
-.. For _external_network_ choose the _external_ network created by Admin 
+.. For _external_network_ choose the *public* network created by Admin 
 .. Click on the router name that was just created to reveal details about the router
 .. Click +Interfaces+
 .. Select +Add Interface+ 
-.. Select the private subnet created and click +Add interface+
+.. Select the *private* subnet created and click +Add interface+
 . View the new network topology
 .. In the tertiary bar choose +Network Topology+
 .. Your topology should look similar to the following:
