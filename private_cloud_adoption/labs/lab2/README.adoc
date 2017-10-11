@@ -255,8 +255,9 @@ Create a subnet that will be used by instances on the tenant network previously 
 [width="90%",frame="topbot"]
 |==================
 |Subnet Name  | TATE_CLI
-|Subnet Range | 10.10.11.0/24
+|Subnet Range | 10.10.10.0/24
 |DHCP Enabled | yes
+|DNS          | 8.8.8.8
 |Network      | TATE_CLI
 |==================
 
@@ -266,18 +267,18 @@ ifdef::showdetailed[]
 
 -------------------
 [root@ctrl ~(tate-cli-admin)]# openstack subnet create TATE_CLI \
-    --subnet-range 10.10.11.0/24 \
+    --subnet-range 10.10.10.0/24 \
     --network TATE_CLI
 +-------------------+--------------------------------------+
 | Field             | Value                                |
 +-------------------+--------------------------------------+
-| allocation_pools  | 10.10.11.2-10.10.11.254              |
-| cidr              | 10.10.11.0/24                        |
+| allocation_pools  | 10.10.10.2-10.10.10.254              |
+| cidr              | 10.10.10.0/24                        |
 | created_at        | 2017-10-11T02:17:26Z                 |
 | description       |                                      |
 | dns_nameservers   |                                      |
 | enable_dhcp       | True                                 |
-| gateway_ip        | 10.10.11.1                           |
+| gateway_ip        | 10.10.10.1                           |
 | headers           |                                      |
 | host_routes       |                                      |
 | id                | 57490b6d-e0e1-4873-bc5d-a0cac4004208 |
@@ -538,12 +539,12 @@ It may take some time for the instance to become active and accept logins, due l
 ifdef::showdetailed[]
 
 -------------------
-[root@ctrl ~(tate-cli-admin)]# ip netns exec qrouter-37fca58c-3b26-4127-b3e1-25bd8c688f7f ssh -l cloud-user -i ~/.ssh/id_rsa 10.10.11.12
-The authenticity of host '10.10.11.12 (10.10.11.12)' can't be established.
+[root@ctrl ~(tate-cli-admin)]# ip netns exec qrouter-37fca58c-3b26-4127-b3e1-25bd8c688f7f ssh -l cloud-user -i ~/.ssh/id_rsa 10.10.10.12
+The authenticity of host '10.10.10.12 (10.10.10.12)' can't be established.
 ECDSA key fingerprint is SHA256:ErRs3iPnmY5z8h1kOReOfq6/t1rULvtzKFKc2EKDT3Y.
 ECDSA key fingerprint is MD5:a8:00:6c:a3:ad:87:19:cf:73:06:a8:75:88:53:0d:91.
 Are you sure you want to continue connecting (yes/no)? yes
-Warning: Permanently added '10.10.11.12' (ECDSA) to the list of known hosts.
+Warning: Permanently added '10.10.10.12' (ECDSA) to the list of known hosts.
 [cloud-user@example-rhel7 ~]$ 
 -------------------
 

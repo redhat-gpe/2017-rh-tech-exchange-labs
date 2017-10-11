@@ -60,7 +60,9 @@ ansible --version
 ----
 
 == Lab Goals
-. Configure tenant 1 via Horizon UI
+NOTE: All steps below must be completed via Ansible playbooks and/or roles.
+
+. Configure tenant 3 called "TATE_ANSIBLE"
 . Upload the latest RHEL guest image into the Image service only visible to this tenant
 . Add custom security group called “TATE_ANSIBLE”
 . Enable Ingress ports for icmp, SSH, and whatever is required by your application

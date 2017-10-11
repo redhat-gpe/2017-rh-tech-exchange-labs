@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8" />
 <meta name="generator" content="AsciiDoc 8.6.9" />
-<title>Private Cloud Adoption - Lab 3</title>
+<title>Private Cloud Adoption - Lab 0</title>
 <style type="text/css">
 /* Shared CSS for AsciiDoc xhtml11 and html5 backends */
 
@@ -767,7 +767,8 @@ asciidoc.install(2);
 </head>
 <body class="article">
 <div id="header">
-<h1>Private Cloud Adoption - Lab 3</h1>
+<h1>Private Cloud Adoption - Lab 0</h1>
+<span id="author">Red Hat Global Partner &amp; Technical Enablement</span><br />
 <div id="toc">
   <div id="toctitle">Table of Contents</div>
   <noscript><p><b>JavaScript must be enabled in your browser to display the table of contents.</b></p></noscript>
@@ -775,28 +776,158 @@ asciidoc.install(2);
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_lab_3_overivew">1. Lab 3 Overivew</h2>
+<h2 id="_spinning_up_openstack">Spinning Up OpenStack</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>Using the same environment from lab 0, create a second tenant via Ansible playbooks. The preferred method will be using Ansible playbooks but if students are completely uncomfortable with Ansible they can opt to use bash (or another scripting method) to invoke the OpenStack CLI or API directly with significant points reduced.</p></div>
-<div class="paragraph"><p>Students will use the Ansible Cloud Modules reference for specific details on modules or the OpenStack CLI reference guide. Keep in mind there are times when the Ansible module may not contain a feature or support a specific parameter you need. In cases like this is may be necessary to use an equivalent CLI command. However, that this means the host running the Playbook needs to have the required python libraries. In this case it may be appropriate to make direct API calls using a URI module. See references below for an example.</p></div>
-<div class="sect2">
-<h3 id="_references">1.1. References</h3>
-<div class="paragraph"><p>The following resources will be helpful in the labs that follow:</p></div>
+<div class="olist arabic"><ol class="arabic">
+<li>
+<p>
+Login to <a href="https://labs.opentlc.com/">https://labs.opentlc.com/</a>
+</p>
+</li>
+<li>
+<p>
+Select <code>Services -&gt; Catalogs</code>
+</p>
+</li>
+<li>
+<p>
+Expand <code>OPENTL Cloud Infrastructure</code>
+</p>
+</li>
+<li>
+<p>
+Order <code>Red Hat Tech Exchange OSP10</code>
+</p>
+</li>
+<li>
+<p>
+Check your email to obtain unique hostname
+</p>
+</li>
+</ol></div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_access_to_lab_environment">Access to Lab Environment</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Your OpenStack lab environment contains the following:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<a href="http://docs.ansible.com/ansible/latest/list_of_cloud_modules.html">http://docs.ansible.com/ansible/latest/list_of_cloud_modules.html</a>
+External hostnames, IP addresses, Ports:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Workstation: workstation-$GUID.rhpds.opentlc.com / see IP address in e-mail / Port 22 (ssh)
 </p>
 </li>
 <li>
 <p>
-Example playbook using pure API calls: <a href="https://github.com/vvaldez/ansible-openstack-api">https://github.com/vvaldez/ansible-openstack-api</a>
+Controller: ctrl-$GUID.rhpds.opentlc.com / see IP address in e-mail / Ports 80,443 (http/https), 6080 (novnc)
+</p>
+</li>
+<li>
+<p>
+Horizon external URL: <a href="https://ctrl-$GUID.rhpds.opentlc.com">https://ctrl-$GUID.rhpds.opentlc.com</a>
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Username: admin
+</p>
+</li>
+<li>
+<p>
+Password: &lt;instructor will provide&gt;
 </p>
 </li>
 </ul></div>
-</div>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+Internal hostnames, IP addresses:
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Workstation: workstation.example.com 192.168.0.5
+</p>
+</li>
+<li>
+<p>
+Controller: ctrl.example.com 192.168.0.20
+</p>
+</li>
+<li>
+<p>
+Compute0: comp00.example.com 192.168.0.30
+</p>
+</li>
+<li>
+<p>
+Compute1: comp01.example.com 192.168.0.31
+</p>
+</li>
+<li>
+<p>
+Server: server.example.com 192.168.0.80
+</p>
+</li>
+</ul></div>
+</li>
+<li>
+<p>
+External cloud network (preconfigured):
+</p>
+<div class="ulist"><ul>
+<li>
+<p>
+Network Name: public
+</p>
+</li>
+<li>
+<p>
+Type: flat
+</p>
+</li>
+<li>
+<p>
+Subnet Name: sub_pub
+</p>
+</li>
+<li>
+<p>
+CIDR: 192.168.0.0/16
+</p>
+</li>
+<li>
+<p>
+Allocation Pool: 192.168.0.100 - 192.168.0.200
+</p>
+</li>
+<li>
+<p>
+DHCP Allocation disabled
+</p>
+</li>
+<li>
+<p>
+Gateway: 192.168.0.2
+</p>
+</li>
+<li>
+<p>
+DNS Name Server: 192.168.0.1
+</p>
+</li>
+</ul></div>
+</li>
+</ul></div>
 <div class="sect2">
-<h3 id="_access_lab_workstation">1.2. Access Lab Workstation</h3>
+<h3 id="_access_lab_workstation">Access Lab Workstation</h3>
 <div class="olist arabic"><ol class="arabic">
 <li>
 <p>
@@ -845,161 +976,38 @@ After logging in, make sure you can become <code>root</code> on the lab workstat
 </div>
 </div>
 <div class="sect1">
-<h2 id="_preparation">2. Preparation</h2>
+<h2 id="_pre_lab_coniguration">Pre-lab coniguration</h2>
 <div class="sectionbody">
+<div class="paragraph"><p>Due to some last minute changes the following changes are needed in your enviroments before we beging the rest of the labs.</p></div>
+<div class="sect2">
+<h3 id="_disable_shared_external_network">Disable Shared External Network</h3>
 <div class="olist arabic"><ol class="arabic">
 <li>
 <p>
-Install Ansible on your workstation VM:
-</p>
-<div class="listingblock">
-<div class="content">
-<pre><code>yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-yum install -y python python-devel python-pip gcc ansible
-pip install shade</code></pre>
-</div></div>
-</li>
-<li>
-<p>
-Verify Ansible installation
-</p>
-<div class="listingblock">
-<div class="content">
-<pre><code>ansible --version</code></pre>
-</div></div>
-</li>
-</ol></div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_lab_goals">3. Lab Goals</h2>
-<div class="sectionbody">
-<div class="admonitionblock">
-<table><tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">All steps below must be completed via Ansible playbooks and/or roles.</td>
-</tr></table>
-</div>
-<div class="olist arabic"><ol class="arabic">
-<li>
-<p>
-Configure tenant 3 called "TATE_ANSIBLE"
-</p>
-</li>
-<li>
-<p>
-Upload the latest RHEL guest image into the Image service only visible to this tenant
-</p>
-</li>
-<li>
-<p>
-Add custom security group called “TATE_ANSIBLE”
-</p>
-</li>
-<li>
-<p>
-Enable Ingress ports for icmp, SSH, and whatever is required by your application
-</p>
-</li>
-<li>
-<p>
-Create a network called “TATE_ANSIBLE”
-</p>
-</li>
-<li>
-<p>
-Create a subnet called “TATE_ANSIBLE”
-</p>
-</li>
-<li>
-<p>
-Create a router called “TATE_ANSIBLE” that connects your network to the public network (which has already been created)
-</p>
-</li>
-<li>
-<p>
-Boot a test server
-</p>
-</li>
-<li>
-<p>
-Assign a Floating IP to this server
-</p>
-</li>
-<li>
-<p>
-Verify you can ping and SSH to this server from outside the OpenStack environment
-</p>
-</li>
-<li>
-<p>
-Create a volume and attach it to this server
-</p>
-</li>
-<li>
-<p>
-Ensure this volume is visible in the server
-</p>
-</li>
-<li>
-<p>
-Follow Ansible best practices
+Disable <code>shared</code> property on <code>public</code> network
 </p>
 <div class="olist loweralpha"><ol class="loweralpha">
 <li>
 <p>
-Separate data and logic so all variables can be defined in a single external yaml file
+This is easily accomplished via Horizon as admin
 </p>
 </li>
 <li>
 <p>
-Use a role for bonus points
-</p>
-</li>
-<li>
-<p>
-Avoid using any <code>shell</code> or <code>command</code> module calls or else.
+This can also be completed as admi via the OpenStack CLI
 </p>
 </li>
 </ol></div>
 </li>
 </ol></div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_stretch_goal">4. Stretch Goal</h2>
-<div class="sectionbody">
-<div class="olist arabic"><ol class="arabic">
-<li>
-<p>
-Create a playbook to completely teardown the previous playbook configuration.
-</p>
-</li>
-<li>
-<p>
-To verify, ensure the "TATE_ANSIBLE" tenant project is gone and all objects.
-</p>
-</li>
-<li>
-<p>
-Re-run your original playbook to ensure everything is once again configured
-</p>
-</li>
-<li>
-<p>
-Re-run your teardown playbook again
-</p>
-</li>
-</ol></div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2017-10-11 00:20:49 CDT
+Last updated 2017-10-11 00:14:20 CDT
 </div>
 </div>
 </body>
