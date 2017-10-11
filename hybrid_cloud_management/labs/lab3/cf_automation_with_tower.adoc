@@ -201,7 +201,7 @@ This can take 5 to 10 minutes.
 .. Navigate to *All Ansible Tower Job Templates -> ansible1.example.com Automation Manager*.
 .. If you do _not_ see `activate_satellite` show up below the line you just clicked, do the following:
 * Click *Configuration -> Refresh Relationships and Power states* and click *OK*.
-* In the CloudForms UI (not the browser), click image:images/reload_refresh_icon.png[] until `motd` appears.
+* In the CloudForms UI (not the browser), click image:images/reload_refresh_icon.png[] until `activate_satellite` appears.
 +
 [NOTE]
 This can take 5 to 10 minutes.
