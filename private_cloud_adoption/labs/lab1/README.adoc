@@ -8,7 +8,8 @@
 :numbered:
 
 == Lab 1 Overivew
-In this lab students will be given a deployed OpenStack environment without any configuration. They will play the role of a cloud operator and configure the environment for use a developer. This first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner.
+
+In this lab, students will play a role of the cloud operator working with a pre-configured OpenStack environment. They will add a new environment for a developer. This first tenant will be configured via the Horizon UI and steps will be provided so that any students that do not have any OpenStack experience will be introduced to this workflow in a gentle manner.
 
 === References
 The following resources will be helpful in the labs that follow:
@@ -22,9 +23,8 @@ The following resources will be helpful in the labs that follow:
 * password: <instructor will provide>
 
 == Lab Goals
-. Create an external network as detailed in lab0
+
 . Configure tenant 1 via Horizon UI called "TATE_UI"
-. Upload the latest RHEL guest image into the Image service only visible to this tenant
 . Add custom security group called “TATE_UI”
 . Enable Ingress ports for icmp and SSH
 . Create a network called “TATE_UI”
@@ -32,7 +32,7 @@ The following resources will be helpful in the labs that follow:
 . Create a router called “TATE_UI” that connects your network to the public network
 . Boot a test server
 . Assign a Floating IP to this server
-. Verify you can ping and SSH to this server from outside the OpenStack environment
+. Verify you can ping and SSH to this server from outside the OpenStack environment (from `workstation`)
 . Create a volume and attach it to this server
 . Ensure this volume is visible in the server
 
@@ -53,31 +53,6 @@ TIP: If you are already familiar with this process you are highly encouraged to 
 .. Select +Create User+ in the upper right named something like +TATE_UI+
 .. Create a new user and add it to the newly created project with the default role `_member_`
 
-=== Neutron External Network Configuration
-
-IMPORTANT: Perform these steps as *admin*
-
-. Create a network
-.. Select +Admin+ in the primary menu bar at the top
-.. Select +Networks+ in the tertiary menu bar
-.. Select +Create Network+ button in the top right in the main panel
-.. Use the name _external_ or similar
-.. Select _services_ for project
-.. Select _Flat_ for +Network Provider Type+
-.. Select +External Network+ and finally +Create Network+
-+
-NOTE: Do **NOT** select *shared* at this time.
-+
-. Create a subnet
-.. Select the previously created external network under +Network Name+ column on the left to reveal details about the network
-.. Select +Create Subnet+ button on the right side mid-way down
-.. Use the Subnet name of _external_
-.. For +Network Address+: 192.168.56.0/24
-.. For +Gateway IP+ leave it blank 
-.. Select +Next+ to fill out +Subnet Detail+
-.. Uncheck +Enable DHCP+ as this is the external network and there is already a DHCP server on the external network (which is currently your laptop)
-.. For +Allocation Pools+ specify a range as provided by instructor
-.. +Create+ the subnet
 
 [[Project_User_Operations]]
 == Project/Tenant User Operations
@@ -106,23 +81,6 @@ NOTE: An existing public SSH key can be imported instead of creating a new one
 chmod 600 <downloaded_user_key>.pem
 ----
 
-=== Image Management
-
-Upload an image to spawn instances from.
-
-. Select +Project+ in the primary menu bar
-. Select +Compute+ in the secondary menu bar
-. Select +Images+
-. In the upper right select +Create Image+
-. Provide a name and for +Image Location+ provide the link to the latest CirrOS image from:
-+
-http://download.cirros-cloud.net/
-+
-. Select +QCOW2+ for +Format+
-+
-NOTE: If direct upload fails, first download the image locally then browse to it.
-+
-. To add a RHEL image, download one from https://access.redhat.com/downloads/content/69/ver=/rhel---7/x86_64/product-downloads or install one via `yum install rhel-guest-image-7`
 
 === Network Management
 
@@ -141,7 +99,7 @@ NOTE: Perform these steps as the project/tenant user for a Neutron deployment
 .. Select +Next+ to provide +Subnet Details+
 .. Leave +Enable DHCP+ checked as it will provide IPs for the instances on this private network
 .. Leave Allocation Pools blank as the private subnet will not provide any floating IPs
-.. For +DNS Name Servers+ use 192.168.56.252
+.. For +DNS Name Servers+ use 8.8.8.8
 .. Select +Create+ to complete the network and subnet creation
 . Create a router
 .. In the tertiary menu bar select +Routers+
@@ -163,7 +121,7 @@ NOTE: Perform these steps as the project/tenant user for a Neutron deployment
 . Select +Instances+ in the tertiary menu bar
 . Choose +Launch Instance+ in the top right of the main panel
 . Choose a name for the new instance
-. For flavor use *m1.small* for the rhel-guest-image-7 or *m1.tiny* for cirros
+. For flavor use *m1.small* for the *rhel7* or *m1.tiny* for *cirros*
 . For +Instance Boot Source+ select +Boot from Image+
 . Under +Image Name+ select the desired image
 . For +Access & Security+ the key you created earlier should be selected
@@ -181,7 +139,7 @@ NOTE: The instance should only see the private network unless the external netwo
 .. Select +Access & Security+ in the tertiary menu bar
 .. Choose +Floating IPs+ in the main panel
 .. Choose +Allocate IP to Project+ in the upper right in the main panel
-.. The +Pool+ should be set to the +external+ network
+.. The +Pool+ should be set to the +public+ network
 .. Select +Allocate IP+ to create the floating IP and reserve it for use by this project
 +
 NOTE: Now that you know the long way, you can also do it directly from the +Associate+ menu below by clicking the +
