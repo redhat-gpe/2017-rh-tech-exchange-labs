@@ -350,6 +350,7 @@ This playbook should be able to run idempotently. It should also run against the
 ----
 
 .. Uncompress the archive and `cd` into the directory:
+.. Make sure you are using the latest version (http://docs.ansible.com/).
 +
 ----
 # tar -xf ansible-tower-setup-latest.tar.gz
