@@ -1,0 +1,1530 @@
+:course_name: Red Hat OpenShift Container Platform 3 Implementation
+:labname: Highly Available Deployment
+
+:opencf: link:https://labs.opentlc.com/[OPENTLC lab portal]
+:account_management: link:https://www.opentlc.com/account/[OPENTLC Account Management page]
+:ocp_docs: link:https://docs.openshift.com/container-platform/3.7/welcome/index.html[OpenShift Container Platform]
+:catalog_name: OPENTLC OpenShift Labs
+:catalog_item_name: OpenShift Implementation HA Lab
+
+:diagram:benefits:scrollbar:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+== OpenShift Highly Available Installation Lab
+
+=== Lab Goals
+
+In this lab, you deploy and configure OpenShift 3 on a group of servers to meet
+ these requirements:
+
+* Set Up Lab Environment
+* Configure Red Hat Enterprise Linux 7.4 hosts for OpenShift deployment
+* Deploy a highly available OpenShift cluster
+* Configure the OpenShift cluster
+* Validate the OpenShift cluster
+
+=== Important Notes
+
+[IMPORTANT]
+
+Read these notes. They help you successfully navigate the lab.
+
+* You run many commands in this lab remotely from the `bastion` or `master1`
+ host. Make sure you run the commands from the right host.
+
+* This lab is long and extremely important. All future labs depend on the
+ success of your deployment.
+
+* Depending on your workstation's screen size, resolution, and browser, some
+ commands may lose their intended formatting, appearing with extra line breaks.
+  Even though this lab endeavors to avoid this pitfall, the formatting still
+   "breaks" a command sometimes. Pay attention to the command you paste in and
+    correct the formatting if necessary.
+
+:numbered:
+
+== Lab: {labname}
+
+=== Set Up Lab Environment
+
+If you have not done so yet, provision the environment required to complete the
+ labs in the _{course_name}_ training.
+
+. Navigate to the {opencf}.
+
+. Log in to the portal using your OPENTLC credentials and select the
+ *{catalog_item_name}* to provision your environment.
+
+[TIP]
+If you need additional information, use the lab instructions in the first module
+ of this course.
+
+
+==== Preliminary Important Notes
+
+. *Performance*: The lab environment is cloudased, so you can access it over
+ the WAN from anywhere. However, do not expect its performance to match a
+  bare-metal environment.
+
+. *Remote Access*: The bastion host is the only host that you can access with
+ SSH outside the lab environment. External SSH for all other hosts is blocked.
+  From the bastion host, you can access the other hosts internally through SSH.
+   As described earlier, you must access the system (not as `root`) with your
+    private SSH key and OPENTLC login.
+
+. *GUID*: Each lab environment is assigned a global unique identifier (GUID)
+ with four characters, which you receive by email when provisioning your lab
+  environment. *From this point on, replace _GUID_ with your lab's four-character GUID.*
+
+. *Bastion host* is *not* an OpenShift cluster member or part of the OpenShift
+ environment. The bastion host mimics your client's infrastructure or your
+  laptop or desktop that is connected to the client's local area network (LAN).
++
+[TIP]
+It is recommended to use a terminal multiplexing tool, such as
+ *tmux* or *screen*, which keeps your place in the session if you are
+  disconnected from your environment. You can install their packages after
+   setting up the `rhel` repositories `yum install tmux`.
+If you use tmux, type *Ctrl+B* (to enter "scroll mode") + page up or down to
+ scroll, and use the *Esc* key to exit scroll mode.
+You can detach from tmux : `Ctrl+B  D` or simply close you terminal. To attach
+ again an existing tmux session, run the command `tmux attach` once you're
+  connected to the bastion host.
++
+. Provisioned Environment Hosts
+
+These are the hosts that have been deployed in your lab environment:
+
+* Bastion (administration) server: `bastion.GUID.example.opentlc.com`, `bastion.GUID.internal`
+* NFS server: `support1.GUID.example.opentlc.com`, `support1.GUID.internal`
+* Load balancer: `loadbalancer.GUID.example.opentlc.com`, `loadbalancer1.GUID.internal`
+* 3 OpenShift master nodes: `master{1,2,3}.GUID.example.opentlc.com`, `master{1,2,3}.GUID.internal`
+* 2 OpenShift infrastructure nodes: `infranode{1,2}.GUID.example.opentlc.com`, `infranode{1,2}.GUID.internal`
+* 1 OpenShift worker node: `node1.GUID.example.opentlc.com`, `node1.GUID.internal`
+* IPA Server: `ipa.shared.example.opentlc.com` (shared resource for all students)
+
+==== Connect to Bastion Host and Explore your environment
+
+When you connect to `bastion.GUID.example.opentlc.com` for the first time, you
+will have to accept the server SSH fingerprint. Reply 'yes': it will be added
+ to your `known_hosts` and not asked next time you connect.
+
+. Connect to your administration host `bastion.GUID.example.opentlc.com`. Note that your private key location may vary.
++
+[source,bash]
+----
+yourdesktop$ ssh -i ~/.ssh/id_rsa your-opentlc-login@bastion.GUID.example.opentlc.com
+----
++
+* Example of a successful connection:
++
+[source,bash]
+----
+[gucore@work ~]$ ssh gucore-redhat.com@bastion.9e91.example.opentlc.com
+----
++
+[source,text]
+----
+The authenticity of host 'bastion.9e91.example.opentlc.com (31.220.66.121)' can't be established.
+ECDSA key fingerprint is SHA256:fR4vFVswyvpj/Jevfin3+X0Fkehbfx4HBjw46AeIS14.
+ECDSA key fingerprint is MD5:bb:25:92:ee:c9:ba:23:71:b7:c1:f7:2d:89:6d:b0:66.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'bastion.9e91.example.opentlc.com,31.220.66.121' (ECDSA) to the list of known hosts.
+Creating home directory for gucore-redhat.com.
+[gucore-redhat.com@bastion.9e91 ~]$
+----
+
+. Run `sudo -i` to become the `root` user on the bastion host:
++
+[source,bash]
+----
+sudo -i
+----
++
+. Ensure that you have a GUID environment variable set to make entering commands
+easier
++
+[source,bash]
+----
+echo ${GUID}
+----
++
+The output should be your GUID.
++
+If the output is NOT your GUID, execute the following to set your unique identifier as the GUID environment variable:
++
+[source,bash]
+----
+export GUID=$(hostname | cut -d. -f2)
+----
++
+Validate that it is set, and add it to your profile.
++
+[source,bash]
+----
+echo ${GUID}; echo "export GUID=${GUID}" >> /root/.bashrc
+----
+
+
+. A sample Ansible inventory file with host in your environment has been created
+ for you, have a look at `/etc/ansible/hosts`
++
+[source,bash]
+----
+cat /etc/ansible/hosts
+----
++
+. Use the Ansible `--list-hosts` command line to list the masters, nodes, and
+ all of the host groups:
++
+.. List the "masters" host group:
++
+[source,bash]
+----
+ansible masters --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+  hosts (3):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+----
++
+.. List the "nodes" host group (Remember, Masters are Nodes too):
++
+[source,bash]
+----
+ansible nodes --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,bash]
+----
+hosts (8):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+    infranode1.GUID.internal
+    infranode2.GUID.internal
+    node1.GUID.internal
+    node2.GUID.internal
+----
++
+.. List the "all" host group:
++
+[source,bash]
+----
+ansible all --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+hosts (10):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+    infranode1.GUID.internal
+    infranode2.GUID.internal
+    node1.GUID.internal
+    node2.GUID.internal
+    loadbalancer1.GUID.internal
+    support1.GUID.internal
+----
++
+. Test the Ansible configuration by using the Ansible "ping" module to contact all
+the hosts.  This also ensures that all the hosts are running.:
++
+[source,bash]
+----
+ansible all -m ping
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+loadbalancer1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+infranode1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master3.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+infranode2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+support1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node3.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+----
+
+
+=== Configure Red Hat Enterprise Linux 7.4 Hosts for OpenShift Deployment
+
+In this section you prepare the hosts for installation.
+
+* Connect to the bastion host
+* Configure the Secure Shell (SSH) keys
+* Set Up Access to the Satellite Server
+* Query and Validate the DNS configuration for your environment
+* Install Ansible and Validate
+* Configure the network settings
+
+
+==== Configure SSH Keys
+
+The OpenShift Container Platform advanced installer configures hosts with
+ Ansible.  Ansible requires passwordless SSH to be functioning from the bastion
+  host to all other hosts. To do so, SSH keys have already been distributed for
+   you on all the hosts.  In this section you will:
+
+. Create an SSH configuration file that takes advantage of the pre-distributed keys
+. Disable some prompts to allow comletely uninterrupted logins
+. Test and confirm that you can SSH to all the hosts in the cluster without prompts
+
+. Connect to your administration host `bastion.GUID.example.opentlc.com` and
+ become `root`.
+
+. Verify the SSH configuration file on the bastion host
++
+[source,bash]
+----
+cat /root/.ssh/config
+----
++
+* Expect to see the following output:
++
+[source,text]
+----
+Host *.internal
+   User ec2-user
+   IdentityFile ~/.ssh/GUIDkey.pem
+   ForwardAgent yes
+   StrictHostKeyChecking no
+
+Host ec2*
+  User ec2-user
+  IdentityFile ~/.ssh/GUIDkey.pem
+  ForwardAgent yes
+  StrictHostKeyChecking no
+----
+
+. See that you can ssh into the different hosts, note which user and key are
+ used by using the `-v` flag
++
+[source,bash]
+----
+ssh master1.${GUID}.internal -v
+----
++
+. If you were prompted for any confirmations, run the same command again and
+ notice that you are not prompted again.
++
+. Log out of the master, returning to the bastion.
++
+[source,bash]
+----
+exit
+----
+
+
+==== Query and Validate DNS Configuration
+
+It is critical to your deployment's success that DNS is configured correctly.  Validate
+ DNS configuration with the following steps:
+
+. *Load Balancer - Public Name*: This is a public DNS entry.
+ Examine DNS settings for the loadbalancer host that will
+ provide highly available access to the Master API and web console, by executing the following on the bastion host.
++
+[source,bash]
+----
+host loadbalancer.${GUID}.example.opentlc.com
+----
++
+Expect the output to look similar to this with different IP addresses:
++
+[source,text]
+----
+loadbalancer.420f.example.opentlc.com has address 52.200.206.34
+----
++
+. *Load Balancer - Private Name*: This is a private DNS entry.
+ This DNS entry for the loadbalancer host will
+ provide access for ad-hoc Ansible commands, the OpenShift advanced installer, and
+ highly available access to the Master API if configured as such.
+ Examine this entry by executing the following on the bastion host.
++
+[source,bash]
+----
+host loadbalancer1.${GUID}.internal
+----
++
+Expect the output to look similar to this with different IP addresses:
++
+[source,text]
+----
+loadbalancer1.420f.internal has address 192.199.0.149
+----
+. *Wildcard*: .  This is a public DNS entry.  It is configured to resolve to the infranodes
+ in your cluster which host the OpenShift router.
++
+The wildcard subdomain will resolve any subdomains prepended to it to the IP addresses
+  configured.
++
+For example: the wildcard subdomain `apps.GUID.example.opentlc.com` would respond with
+ the same IP addresses for `exampleONE.apps.GUID.example.opentlc.com` AND
+ `exampleTWO.apps.GUID.example.opentlc.com`.
++
+Examine DNS settings for the wildcard DNS entry as follows:
++
+[source,bash]
+----
+host anyname.apps.${GUID}.example.opentlc.com
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+anyname.apps.420f.example.opentlc.com has address 35.153.10.102
+anyname.apps.420f.example.opentlc.com has address 34.202.22.145
+----
++
+. *Masters*: These are private DNS entries.  They resolve to IP addresses only
+ accessible from within the lab environment.  Examine DNS settings for the
+  OpenShift Master hosts by executing the following on the bastion host.
++
+[source,bash]
+----
+dig master{1,2,3}.${GUID}.internal | egrep -v "\;|^$"
+----
++
+Expect the output to look similar to this, with different IP addresses:
++
+[source,text]
+----
+master1.420f.internal.	10	IN	A	192.199.0.69
+master2.420f.internal.	10	IN	A	192.199.0.111
+master3.420f.internal.	10	IN	A	192.199.0.21
+----
++
+. *Nodes*: These are private DNS entries.  They resolve to IP addresses only accessible
+from within the lab environment.  Examine DNS settings for the OpenShift worker and infra node hosts by executing the following on the bastion host:
++
+[source,bash]
+----
+dig {infra,}node{1,2}.${GUID}.internal  | egrep -v "\;|^$"
+----
++
+Expect the output to look similar to this, with different IP addresses:
++
+[source,text]
+----
+infranode1.420f.internal. 1 IN  A 192.199.0.205
+infranode2.420f.internal. 1 IN  A 192.199.0.100
+node1.420f.internal.  1 IN  A 192.199.0.189
+node2.420f.internal.  1 IN  A 192.199.0.8
+----
++
+. *NFS*: This is a private DNS entry.  It resolves to an IP address accessible only
+from within the lab environment. Examine the DNS settings for the support host that supplies the NFS server for remote storage volumes:
++
+[source,bash]
+----
+host support1.${GUID}.internal
+----
++
+Expect the output to look similar to this, with a different IP address:
++
+[source,text]
+----
+support1.420f.internal has address 192.199.0.16
+----
+Now that DNS settings have been validated, you can begin setting up Ansible on the bastion
+host to manage the hosts in the environment.
+
+==== Verify Yum Repositories and NFS Shared Volumes on Hosts
+
+The required yum repositories and NFS shared volumes are already set up on
+ the environment. In this section you verify that they are set up properly.
+
+. List the repositories on the `bastion` host:
++
+[source,bash]
+----
+ansible masters,nodes -m shell -a"yum repolist"
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+...
+...
+node1.GUID.internal | SUCCESS | rc=0 >>
+Loaded plugins: amazon-id, rhui-lb, search-disabled-repos, versionlock
+repo id                        repo name                                  status
+rhel-7-fast-datapath-rpms      Red Hat Enterprise Linux 7 Fast Datapath      16
+rhel-7-server-extras-rpms      Red Hat Enterprise Linux 7 Extras            101
+rhel-7-server-optional-rpms    Red Hat Enterprise Linux 7 Optional        4,848
+rhel-7-server-ose-3.7-rpms     Red Hat Enterprise Linux 7 OSE 3.7           507
+rhel-7-server-rh-common-rpms   Red Hat Enterprise Linux 7 Common             82
+rhel-7-server-rpms             Red Hat Enterprise Linux 7                 5,161
+repolist: 10,715
+
+node2.GUID.internal | SUCCESS | rc=0 >>
+Loaded plugins: amazon-id, rhui-lb, search-disabled-repos, versionlock
+repo id                        repo name                                  status
+rhel-7-fast-datapath-rpms      Red Hat Enterprise Linux 7 Fast Datapath      16
+rhel-7-server-extras-rpms      Red Hat Enterprise Linux 7 Extras            101
+rhel-7-server-optional-rpms    Red Hat Enterprise Linux 7 Optional        4,848
+rhel-7-server-ose-3.7-rpms     Red Hat Enterprise Linux 7 OSE 3.7           507
+rhel-7-server-rh-common-rpms   Red Hat Enterprise Linux 7 Common             82
+rhel-7-server-rpms             Red Hat Enterprise Linux 7                 5,161
+repolist: 10,715
+
+...
+...
+----
+
+. Examine the NFS server to see which NFS volumes are shared
++
+[source,bash]
+----
+ansible nfs -m shell -a"exportfs"
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+support1.93e8.internal | SUCCESS | rc=0 >>
+/srv/nfs      	<world>
+----
+
+. Enable logging of ansible playbook runs:
++
+[source,bash]
+----
+sed -i 's/#log_/log_/' /etc/ansible/ansible.cfg
+----
++
+There is no output from this command.
+
+
+
+=== Install and Configure Docker
+
+OpenShift Container Platform stores and manages container images on Docker.
+
+In this section you will do a complete "manual" install of docker and configure
+ storage for the Docker LV, after doing it once, you can use the scripts
+  provided below to do it on all the other OpenShift Nodes.
+
+==== Install Docker and Configure Docker Storage on one node manually
+
+Next you will install and configure `docker` on one of the hosts, soon after,
+ you will replicate this process on all the nodes on the cluster.
+
+. Connect to `node1.GUID.internal` and become `root`
++
+[source,bash]
+----
+ssh node1.${GUID}.internal
+sudo -i
+----
+
+. Install `Docker` on the host:
++
+[source,bash]
+----
+yum install docker -y
+----
+
+
+. identify the block device that will serve as the Docker Physical volume
++
+[source,bash]
+----
+lsblk
+----
++
+* Expect an output similar to this:
++
+----
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+NAME    MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+xvda    202:0    0   50G  0 disk
+├─xvda1 202:1    0    1M  0 part
+└─xvda2 202:2    0   50G  0 part /
+xvdb    202:16   0  100G  0 disk
+----
+
+. Specify the `/dev/xvdb` hard drive for the Docker volume group for `docker-storage setup`:
++
+[source,bash]
+----
+cat <<EOF > /etc/sysconfig/docker-storage-setup
+DEVS=/dev/xvdb
+VG=docker-vg
+EOF
+
+----
+
+. Run `docker-storage-setup` on the host to create logical volumes
+ for Docker:
++
+[source,bash]
+----
+docker-storage-setup
+----
+
+* Expect an output similar to this:
++
+[source,text]
+----
+INFO: Volume group backing root filesystem could not be determined
+INFO: Device node /dev/xvdb1 exists.
+  Physical volume "/dev/xvdb1" successfully created.
+  Volume group "docker-vg" successfully created
+  Using default stripesize 64.00 KiB.
+  Rounding up size to full physical extent 104.00 MiB
+  Thin pool volume with chunk size 512.00 KiB can address at most 126.50 TiB of data.
+  Logical volume "docker-pool" created.
+  Logical volume docker-vg/docker-pool changed.
+----
++
+[CAUTION]
+In a production environment, exercise caution when running
+ `docker-storage-setup` because that command, by default, locates unused extents
+  in the volume group (VG) that contain the root file system to create the pool.
+   You can specify a VG or block device, but that can be a destructive process
+    for the specified VG or block device. See the OpenShift documentation for
+     details.
+
+. On the host, examine the newly created `docker-pool` logical volume:
++
+----
+lvs
+----
+
+* Expect an output similar to this:
++
+----
+LV          VG        Attr       LSize  Pool Origin Data%  Meta%  Move Log Cpy%Sync Convert
+docker-pool docker-vg twi-a-t--- 39.79g             0.00   0.05
+----
+
+. On the host, examine the configuration of `docker storage`:
++
+[source,bash]
+----
+cat /etc/sysconfig/docker-storage
+----
+
+* Expect an output similar to this:
++
+[source,text]
+----
+DOCKER_STORAGE_OPTIONS="--storage-driver devicemapper --storage-opt dm.fs=xfs --storage-opt dm.thinpooldev=/dev/mapper/docker--vg-docker--pool --storage-opt dm.use_deferred_removal=true --storage-opt dm.use_deferred_deletion=true "
+----
+
+. Enable the Docker service on the host and start it:
++
+[source,bash]
+----
+systemctl enable docker
+systemctl start docker
+----
+
+. Go back to bastion:
++
+[source,bash]
+----
+exit # (to get out of root)
+exit # (to disconnect from the server)
+----
+
+==== Install Docker and Configure Docker Storage on all the nodes
+
+. Use the following commands to install and configure Docker on all the nodes:
++
+[source,bash]
+----
+ansible -f 10 nodes -m yum -a"name=docker"
+ansible -f 10 nodes -m copy -a 'dest=/etc/sysconfig/docker-storage-setup content="DEVS=/dev/xvdb\nVG=docker-vg"'
+ansible -f 10 nodes -m shell -a"docker-storage-setup"
+ansible -f 10 nodes -m service -a"name=docker state=started enabled=yes"
+----
++
+. Ensure Docker is properly deployed on your hosts by inspecting service readiness, as follows.
++
+[source,bash]
+----
+ansible -f 10 nodes -m shell -a "systemctl status docker | grep Active"
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+infranode2.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:24 UTC; 39s ago
+
+node1.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:38:51 UTC; 4min 12s ago
+
+node3.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:24 UTC; 39s ago
+
+master2.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:24 UTC; 40s ago
+
+infranode1.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:24 UTC; 40s ago
+
+node2.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:25 UTC; 38s ago
+
+master3.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:24 UTC; 39s ago
+
+master1.fc0a.internal | SUCCESS | rc=0 >>
+   Active: active (running) since Mon 2018-01-15 23:42:25 UTC; 38s ago
+
+----
++
+. Examine the Package Version You are About to Deploy
++
+[source,bash]
+----
+ansible nodes -m yum -a 'list=atomic-openshift-node'
+----
++
+Expect the output to look similar to this.  Note the version number.  It should
+match the expected OpenShift release number of this course: `3.7.14`
++
+[source,text]
+----
+...
+node3.9308.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "results": [
+        {
+            "arch": "x86_64",
+            "envra": "0:atomic-openshift-node-3.7.14-1.git.0.593a50e.el7.x86_64",
+            "epoch": "0",
+            "name": "atomic-openshift-node",
+            "release": "1.git.0.593a50e.el7",
+            "repo": "rhel-7-server-ose-3.7-rpms",
+            "version": "3.7.14",
+            "yumstate": "available"
+        }
+    ]
+}
+...
+----
+
+=== Deploy Highly Available OpenShift Cluster
+
+In this section, you use the advanced installation method to deploy OpenShift as a
+ clustered, highly available installation that includes a load balancer in front
+ of the API servers. The environment includes three masters, one infra nodes,
+ one worker node, and the load balancer.
+
+Your complete environment will be an OpenShift cluster with the following characteristics:
+
+* Three master hosts in the deployment
+* A load balancer to access the masters
+* One infra nodes running a router container
+* An integrated registry pod backed by a persistent volume (PV) storage (NFS)
+* Router pods deployed, configured, and running on each infranode in the cluster
+* Aggregated logging configured and working
+* Metrics collection configured and working
+* Worker nodes labeled as `env=app` and infra nodes labeled as `env=infra`
+* The `env=infra` node selector defined in the `default` namespace
+* A `*.apps.GUID.example.opentlc.com` wildcard DNS entry that points to the
+ infra nodes
+* The load balancer configured with `loadbalancer.GUID.example.opentlc.com`
+ as the external DNS entry
+
+The advanced installation method is based on Ansible playbooks and as such requires
+ directly invoking Ansible.
+
+==== Prepare OpenShift-Ansible Inventory for OpenShift Deployment
+
+In this section, you will create an Ansible Inventory file and use it with
+ Ansible to deploy your cluster
+
+The OpenShift advanced installer is comprised of the Ansible OpenShift's project
+ ansible playbooks.  Ensure that they are installed by running the commands that follow:
+
+
+The Ansible Inventory file will be managed in `ini` format.  `Ini` format
+organizes groups of parameters into sections with section names in square brackets. The
+OpenShift ansible inventory file has two main sections:
+`[OSEv3:vars]` and `[OSEv3:children]`.  The `[OSEv3:children]` section defines subsections
+which describe each of the hosts.   These are the hosts and host groups you tested in the
+previous section.
+
+. On the `bastion` host, install the `atomic-openshift-utils` package, which
+ includes the installer and has Ansible and the playbooks as dependencies:
++
+[source,bash]
+----
+yum -y install atomic-openshift-utils atomic-openshift-clients
+----
+
+==== Create your Inventory file
+
+. Open the `/root/my_ocp_inventory` file in your preferred editor
+ (`vi` or `nano`) and add the text in the following segments as requested:
++
+[source,text]
+----
+vi /root/my_ocp_inventory
+----
+
+TIP: You can manually change or run `sed -i  "s/GUID/${GUID}/g" /root/my_ocp_inventory` after you
+ finish copy-pasting to make sure that your unique identified is used and not
+  "GUID" which will fail during the installation.
+
+===== OpenShift Basic Variables
+
+[source,ini]
+----
+[OSEv3:vars]
+###########################################################################
+### Ansible Vars
+###########################################################################
+timeout=60
+ansible_become=yes <1>
+ansible_ssh_user=ec2-user <2>
+
+###########################################################################
+### OpenShift Basic Vars
+###########################################################################
+deployment_type=openshift-enterprise <3>
+containerized=false <4>
+openshift_disable_check="disk_availability,memory_availability" <5>
+
+# default project node selector
+osm_default_node_selector='env=app' <6>
+
+# Configure logrotate scripts
+# See: https://github.com/nickhammond/ansible-logrotate <7>
+logrotate_scripts=[{"name": "syslog", "path": "/var/log/cron\n/var/log/maillog\n/var/log/messages\n/var/log/secure\n/var/log/spooler\n", "options": ["daily", "rotate 7","size 500M", "compress", "sharedscripts", "missingok"], "scripts": {"postrotate": "/bin/kill -HUP `cat /var/run/syslogd.pid 2> /dev/null` 2> /dev/null || true"}}]
+
+----
+
+<1> This variable is used to indicate to Ansible that it is allowed to
+ "become root" when running commands.
+<2> This variable sets the user, in our case `ec2-user` that will be used to
+ connect to hosts by Ansible.
+<3> `deployment_type=openshift-enterprise` indicates that you will be deploying
+the enterprise-ready version of this product.
+<4> `containerized=false` installs the rpm based version of OCP, if 'true' is
+ selected, containerized installation installs services using container images
+  and runs separate services in individual containers.
+<5>  Our learning lab environments do not have all the disk space available to OpenShift
+ that our installation promises.  However, we are not doing performance testing on these
+ environments, so we may overprovision them.  Allow `disk_availability` not to be automatically
+ checked by OpenShift Anisble by changing the last setting above to have
+ `openshift_disable_check="memory_availability,disk_availability"`.
+<6> `osm_default_node_selector='env=app'` indicates to the OpenShift Scheduler that unless
+ otherwise indicated, pods should be scheduled to run on nodes that have the label `env=app`.
+<7> `logrotate_scripts` is a convenience setting so the limited disk space in your
+ lab environment is not used up and wont cause confusing systems errors.
+
+===== OpenShift Optional Variables
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Optional Vars
+###########################################################################
+
+# Enable cockpit
+osm_use_cockpit=true <1>
+osm_cockpit_plugins=['cockpit-kubernetes']
+
+# Configure additional projects
+openshift_additional_projects={'my-infra-project-test': {'default_node_selector': 'env=apps'}} <2>
+
+----
+
+<1> Set to true to install Cockpit on the masters.
+<2> Create an optional list of projects which will be created as part of the OCP
+installation. You can specify the node selector for those projects.
+
+===== OpenShift Master Variables
+
+These variables control the configuration of the OpenShift Master process.
+
+WARNING: Make sure you replace GUID with your unique identifier.
+
+NOTE: Note that `loadbalancer1.GUID.internal` has a different name for public
+access: `loadbalancer.GUID.example.opentlc.com`
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Master Vars
+###########################################################################
+
+openshift_master_api_port=443 <1>
+openshift_master_console_port=443
+
+openshift_master_cluster_method=native <2>
+openshift_master_cluster_hostname=loadbalancer.GUID.example.opentlc.com <3>
+openshift_master_cluster_public_hostname=loadbalancer.GUID.example.opentlc.com <4>
+openshift_master_default_subdomain=apps.GUID.example.opentlc.com <4>
+openshift_master_overwrite_named_certificates=True
+
+openshift_set_hostname=True <5>
+
+----
+
+<1> The API and console ports default to 8443.  Save a little effort later and switch
+them to the port 443 standard for HTTPS.
+<2> The `openshift_master_cluster_method`  defines how OpenShift masters implement HA
+for their internal functions.  Earlier releases used other methods we no longer cover.
+<3> Your OpenShift master servers will be served by a load balancer (defined below.)
+<4> In these examples, the loadbalancer's public hostname is used for access to the
+ Master API from clients both internal and external to the cluster.
+<5> In some cloud hosting systems, the hostname given to the hosts is not resolvable
+ while OpenShift is being setup.  This forces ansible to set the proper hostname so the
+ setup may suceed.
+
+===== OpenShift Network Variables
+
+These variables control the IP addressing of the two fundamental OpenShift networks
+ and the SDN plugins that manage them. Here you've selected the simplest of plugins,
+ `openshift-ovs-subnet`.  In advanced courses, we cover other plugins, like
+ `openshift-ovs-multitenant`, which is commented out below.
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Network Vars
+###########################################################################
+
+osm_cluster_network_cidr=10.1.0.0/16 <1>
+openshift_portal_net=172.30.0.0/16 <2>
+
+#os_sdn_network_plugin_name='redhat/openshift-ovs-multitenant'
+os_sdn_network_plugin_name='redhat/openshift-ovs-subnet' <3>
+
+----
+
+<1> This variable overrides the SDN cluster network CIDR block. This is the
+ network from which pod IPs are assigned.
+<2> This variable configures the subnet in which `services` will be created
+ within the OCP SDN. This network block should be private and must not conflict with any
+existing network blocks in your infrastructure to which pods, nodes, or the
+master may require access to, or the installation will fail.
+<3> This variable configures which OpenShift SDN plug-in to use for the pod
+ network, which defaults to `redhat/openshift-ovs-subnet` for the
+standard SDN plug-in. Set the variable to `redhat/openshift-ovs-multitenant` to
+use the multitenant plug-in.
+
+
+===== OpenShift Authentication Variables
+
+These variables control the identity providers that will be installed and
+ enabled in the OpenShift Master to provide authentication services.
+
+Here, you are setting up a simple `htpasswd` identity provider, and providing a
+ sample httpasswd file with usernames and encrypted passwords.
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Authentication Vars
+###########################################################################
+
+# htpasswd auth
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}] <1>
+# Defining htpasswd users
+#openshift_master_htpasswd_users={'user1': '<pre-hashed password>', 'user2': '<pre-hashed password>'}
+# or
+openshift_master_htpasswd_file=/root/htpasswd.openshift <2>
+----
+
+<1> Tells Ansible to setup the OpenShift Master use `htpasswd_auth` and find the credentials file
+ on its local filesystem.
+<2> Tells Ansible to find the source of that file in the bastion's filesystem for transfer
+ to each of the three master hosts. (This file was created for you already in this lab)
+
+===== OpenShift Metrics and Logging Variables
+
+In the following long section of variables, metrics and logging components are setup
+ in your cluster.  Note the pattern that is expressed in each of the stanzas of
+ variables.
+
+WARNING: Make sure you replace GUID with your unique identifier.
+
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Metrics and Logging Vars
+###########################################################################
+
+# Enable cluster metrics
+
+openshift_metrics_install_metrics=True <1>
+
+openshift_metrics_storage_kind=nfs <2>
+openshift_metrics_storage_access_modes=['ReadWriteOnce']  <2>
+openshift_metrics_storage_nfs_directory=/srv/nfs  <2>
+openshift_metrics_storage_nfs_options='*(rw,root_squash)'  <2>
+openshift_metrics_storage_volume_name=metrics  <2>
+openshift_metrics_storage_volume_size=10Gi  <2>
+openshift_metrics_storage_labels={'storage': 'metrics'}  <2>
+
+openshift_metrics_cassandra_nodeselector={"env":"infra"} <3>
+openshift_metrics_hawkular_nodeselector={"env":"infra"} <3>
+openshift_metrics_heapster_nodeselector={"env":"infra"} <3>
+
+#openshift_master_metrics_public_url=https://hawkular-metrics.apps.GUID.example.opentlc.com/hawkular/metrics
+
+# Enable cluster logging
+
+openshift_logging_install_logging=True <1>
+
+openshift_logging_storage_kind=nfs  <2>
+openshift_logging_storage_access_modes=['ReadWriteOnce']  <2>
+openshift_logging_storage_nfs_directory=/srv/nfs  <2>
+openshift_logging_storage_nfs_options='*(rw,root_squash)'  <2>
+openshift_logging_storage_volume_name=logging  <2>
+openshift_logging_storage_volume_size=10Gi  <2>
+openshift_logging_storage_labels={'storage': 'logging'}  <2>
+
+# openshift_logging_kibana_hostname=kibana.apps.GUID.example.opentlc.com
+openshift_logging_es_cluster_size=1
+
+openshift_logging_es_nodeselector={"env":"infra"}  <3>
+openshift_logging_kibana_nodeselector={"env":"infra"} <3>
+openshift_logging_curator_nodeselector={"env":"infra"} <3>
+----
+
+
+For each of the components Ansible variables are used to:
+
+<1> Control if the component will be installed/deployed at all
+<2> Set up several aspects of storage for the component
+<3> Specify a `nodeselector` which will direct scheduling of the components' pods to
+ the desired node with a `label` matching the `nodeselector` value.
+
+Some components also offer variables indicating specific features, such as
+ cluster-size (number of pods deployed for component) and the URL where the service
+ can be accessed, if not directly through the OpenShift API.
+
+
+
+===== OpenShift Router and Registry Variables
+
+An OpenShift router will be created during install if there are
+nodes present with labels matching the `openshift_hosted_router_selector`,
+`region=infra`. Later in this lab, you will `openshift_node_labels` per node as needed in
+order to label nodes.
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Router and Registry Vars
+###########################################################################
+
+openshift_hosted_router_selector='env=infra' <1>
+openshift_hosted_router_replicas=2 <2>
+#openshift_hosted_router_certificate={"certfile": "/path/to/router.crt", "keyfile": "/path/to/router.key", "cafile": "/path/to/router-ca.crt"} <3>
+
+openshift_hosted_registry_selector='env=infra' <4>
+openshift_hosted_registry_replicas=1 <5>
+
+openshift_hosted_registry_storage_kind=nfs <6>
+openshift_hosted_registry_storage_access_modes=['ReadWriteMany']
+openshift_hosted_registry_storage_nfs_directory=/srv/nfs
+openshift_hosted_registry_storage_nfs_options='*(rw,root_squash)'
+openshift_hosted_registry_storage_volume_name=registry
+openshift_hosted_registry_storage_volume_size=20Gi
+openshift_hosted_registry_pullthrough=true
+openshift_hosted_registry_acceptschema2=true
+openshift_hosted_registry_enforcequota=true
+
+----
+
+<1> Router selector (optional) Router will only be created if nodes matching this label are present.
+<2> Unless specified, openshift-ansible will calculate the replica count based on the number of nodes matching the openshift router selector.
+<3> Provide local certificate paths which will be configured as the router's default certificate.
+<4> Registry will only be created if nodes matching this label are present.
+<5> Registry replicas (optional) Unless specified, openshift-ansible will calculate the replica count based on the number of nodes matching the openshift registry selector.
+<6> NFS Host Group An NFS volume will be created with path "nfs_directory/volume_name" on the host within the [nfs] host group.  For example, the volume path using these options would be "/exports/registry".  The rest of the options will be covered in advanced courses.
+
+===== OpenShift Service Catalog Variables
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Service Catalog Vars
+###########################################################################
+
+openshift_enable_service_catalog=true <1>
+template_service_broker_install=true <2>
+openshift_template_service_broker_namespaces=['openshift'] <3>
+ansible_service_broker_install=false <4>
+----
+
+<1> Enable the service catalog.
+<2> Enable template service broker (requires service catalog to be enabled, above)
+<3> Configure one or more namespaces whose templates will be served by the Template Service Broker
+<4> The Ansible Service Broker does not currently deploy without errors
+
+===== OpenShift Prometheus Metrics Variables (Optional)
+
+[source,ini]
+----
+## Add Prometheus Metrics:
+openshift_hosted_prometheus_deploy=true <1>
+openshift_prometheus_node_selector={"env":"infra"}
+openshift_prometheus_namespace=openshift-metrics <2>
+
+# Prometheus
+
+openshift_prometheus_storage_kind=nfs
+openshift_prometheus_storage_access_modes=['ReadWriteOnce']
+openshift_prometheus_storage_nfs_directory=/srv/nfs
+openshift_prometheus_storage_nfs_options='*(rw,root_squash)'
+openshift_prometheus_storage_volume_name=prometheus
+openshift_prometheus_storage_volume_size=10Gi
+openshift_prometheus_storage_labels={'storage': 'prometheus'}
+openshift_prometheus_storage_type='pvc'
+# For prometheus-alertmanager
+openshift_prometheus_alertmanager_storage_kind=nfs
+openshift_prometheus_alertmanager_storage_access_modes=['ReadWriteOnce']
+openshift_prometheus_alertmanager_storage_nfs_directory=/srv/nfs
+openshift_prometheus_alertmanager_storage_nfs_options='*(rw,root_squash)'
+openshift_prometheus_alertmanager_storage_volume_name=prometheus-alertmanager
+openshift_prometheus_alertmanager_storage_volume_size=10Gi
+openshift_prometheus_alertmanager_storage_labels={'storage': 'prometheus-alertmanager'}
+openshift_prometheus_alertmanager_storage_type='pvc'
+# For prometheus-alertbuffer
+openshift_prometheus_alertbuffer_storage_kind=nfs
+openshift_prometheus_alertbuffer_storage_access_modes=['ReadWriteOnce']
+openshift_prometheus_alertbuffer_storage_nfs_directory=/srv/nfs
+openshift_prometheus_alertbuffer_storage_nfs_options='*(rw,root_squash)'
+openshift_prometheus_alertbuffer_storage_volume_name=prometheus-alertbuffer
+openshift_prometheus_alertbuffer_storage_volume_size=10Gi
+openshift_prometheus_alertbuffer_storage_labels={'storage': 'prometheus-alertbuffer'}
+openshift_prometheus_alertbuffer_storage_type='pvc'
+----
+
+===== Adding hosts and labels to the ansible hosts file
+
+WARNING: Make sure you replace GUID with your unique identifier.
+
+[source,ini]
+----
+###########################################################################
+### OpenShift Hosts
+###########################################################################
+[OSEv3:children]
+lb
+masters
+etcd
+nodes
+nfs
+
+[lb]
+loadbalancer1.GUID.internal
+
+[masters]
+master3.GUID.internal
+master2.GUID.internal
+master1.GUID.internal
+
+[etcd]
+master3.GUID.internal
+master2.GUID.internal
+master1.GUID.internal
+
+
+[nodes]
+## These are the masters
+master3.GUID.internal openshift_hostname=master3.GUID.internal openshift_node_labels="{'logging':'true','openshift_schedulable':'False','cluster': 'GUID'}"
+master2.GUID.internal openshift_hostname=master2.GUID.internal openshift_node_labels="{'logging':'true','openshift_schedulable':'False','cluster': 'GUID'}"
+master1.GUID.internal openshift_hostname=master1.GUID.internal openshift_node_labels="{'logging':'true','openshift_schedulable':'False','cluster': 'GUID'}"
+
+## These are infranodes
+infranode1.GUID.internal openshift_hostname=infranode1.GUID.internal  openshift_node_labels="{'logging':'true','cluster': 'GUID', 'env':'infra'}"
+infranode2.GUID.internal openshift_hostname=infranode2.GUID.internal  openshift_node_labels="{'logging':'true','cluster': 'GUID', 'env':'infra'}"
+
+## These are regular nodes
+node3.GUID.internal openshift_hostname=node3.GUID.internal  openshift_node_labels="{'logging':'true','cluster': 'GUID', 'env':'app'}"
+node1.GUID.internal openshift_hostname=node1.GUID.internal  openshift_node_labels="{'logging':'true','cluster': 'GUID', 'env':'app'}"
+node2.GUID.internal openshift_hostname=node2.GUID.internal  openshift_node_labels="{'logging':'true','cluster': 'GUID', 'env':'app'}"
+
+
+[nfs]
+support1.GUID.internal openshift_hostname=support1.GUID.internal
+----
+
+[TIP]
+You can use the pre-populated file created for this lab under
+ `/var/preserve/hosts` and use it as your inventory file.
+
+===== Save the Ansible Inventory File
+
+. Save all your changes and exit your editor.
++
+[TIP]
+You might want to do an informal temporary git repository to keep a record of changes to this file: `cd root; git init; git add my_ocp_inventory; git commit -m 'initial commit'`
++
+. Ensure that all that all instances of GUID in the Inventory file have been properly changed to your unique identifier:
++
+[source,bash]
+----
+sed -i "s/GUID/${GUID}/g" /root/my_ocp_inventory
+----
+
+
+==== Run the OpenShift Installer
+
+. Run `ansible-playbook` to start the installation process:
++
+[TIP]
+Don't forget to use `tmux` or another terminal multiplexer.  If your Internet connection should break while
+the playbook is running, the mutliplexer will ensure that the session continues and the playbook keeps running
+to completion.  If you are detached somehow, you can `ssh` back into the bastion, and type `tmux attach` to
+return to your session.
++
+[source,text]
+----
+ansible-playbook -f 20 -i /root/my_ocp_inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
++
+* The installation takes at least 20 minutes.
++
+. Examine the PLAY RECAP of the Advanced Installer
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+PLAY RECAP *************************************************************************************************************
+infranode1.fc0a.internal   : ok=194  changed=61   unreachable=0    failed=0
+infranode2.fc0a.internal   : ok=194  changed=61   unreachable=0    failed=0
+loadbalancer1.fc0a.internal : ok=74   changed=15   unreachable=0    failed=0
+localhost                  : ok=14   changed=0    unreachable=0    failed=0
+master1.fc0a.internal      : ok=424  changed=153  unreachable=0    failed=0
+master2.fc0a.internal      : ok=424  changed=153  unreachable=0    failed=0
+master3.fc0a.internal      : ok=1035 changed=412  unreachable=0    failed=0
+node1.fc0a.internal        : ok=194  changed=61   unreachable=0    failed=0
+node2.fc0a.internal        : ok=194  changed=61   unreachable=0    failed=0
+node3.fc0a.internal        : ok=194  changed=61   unreachable=0    failed=0
+support1.fc0a.internal     : ok=72   changed=13   unreachable=0    failed=0
+
+
+INSTALLER STATUS *******************************************************************************************************
+Initialization             : Complete
+Health Check               : Complete
+etcd Install               : Complete
+NFS Install                : Complete
+Load balancer Install      : Complete
+Master Install             : Complete
+Master Additional Install  : Complete
+Node Install               : Complete
+Hosted Install             : Complete
+Metrics Install            : Complete
+Logging Install            : Complete
+Prometheus Install         : Complete
+Service Catalog Install    : Complete
+----
++
+. In Case of Error
++
+.. If the playbook does not complete with PLAY RECAP for each host showing `failed=0`, you may reinstall with a known good Ansible Inventory, by executing the following commands.
++
+[source,bash]
+----
+ansible-inventory -f 20 -i /root/my_ocp_inventory /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-management/uninstall.yml
+----
++
+.. Install again with the known-good Ansible Inventory file.
++
+[source,bash]
+----
+ansible-playbook -f 20 -i /var/preserve/hosts /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
++
+.. As before, this process will take about 20 minutes.  Your installation should complete without error.  If it fails, please contact support at `rhpds-admins@redhat.com`.
+
+=== Verify OpenShift Cluster
+
+In this section, you will ensure that the proper configuration and components have
+ been deployed in accord your ansible Inventory file.
+
+==== Verify Node Configuration
+
+. Connect to one of the master hosts:
++
+[source,text]
+----
+# ssh master1.${GUID}.internal
+----
+
+. Run `oc get nodes` to display the nodes:
++
+[source,text]
+----
+# oc get nodes --show-labels
+----
+
+* Expect your output to be similar to the following:
++
+[source,text]
+----
+NAME                            STATUS                     AGE       LABELS
+infranode1.r2d2.internal        Ready                      14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,env=infra,kubernetes.io/hostname=infranode1.r2d2.internal,logging-infra-fluentd=true,zone=THX-1138
+infranode2.r2d2.internal        Ready                      14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,env=infra,kubernetes.io/hostname=infranode2.r2d2.internal,logging-infra-fluentd=true,zone=THX-1139
+ip-192-199-0-11.ec2.internal    Ready                      14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,env=primary,kubernetes.io/hostname=ip-192-199-0-11.ec2.internal,logging-infra-fluentd=true,zone=THX-1138
+ip-192-199-0-215.ec2.internal   Ready,SchedulingDisabled   14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=ip-192-199-0-215.ec2.internal,logging-infra-fluentd=true
+ip-192-199-0-224.ec2.internal   Ready,SchedulingDisabled   14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=ip-192-199-0-224.ec2.internal,logging-infra-fluentd=true
+ip-192-199-0-236.ec2.internal   Ready                      14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,env=primary,kubernetes.io/hostname=ip-192-199-0-236.ec2.internal,logging-infra-fluentd=true,zone=THX-1139
+ip-192-199-0-87.ec2.internal    Ready,SchedulingDisabled   14m       beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/hostname=ip-192-199-0-87.ec2.internal,logging-infra-fluentd=true
+----
+
+==== Configure the OpenShift Cluster
+
+In this section, you create persistent volumes (PVs) for users to consume, and
+ you verify LDAP authentication.
+
+* You create 25 PVs with these parameters:
+** Size: 5 GB
+** PV access: `ReadWriteOnce`
+** ReclaimPolicy: `Recycle`
+
+* You create 25 PVs with these parameters:
+** Size: 10 GB
+** PV access: `ReadWriteMany`
+** ReclaimPolicy: `Retain`
+
+
+==== Create Different PVs for Users
+
+
+. Create directories on the `support1.$GUID.internal` NFS host to be used as PVs in
+ the OpenShift cluster:
++
+[source,text]
+----
+ssh support1.$GUID.internal
+sudo bash
+mkdir -p /srv/nfs/user-vols/pv{1..200}
+
+for pvnum in {1..50} ; do
+echo /srv/nfs/user-vols/pv${pvnum} *(rw,root_squash) >> /etc/exports.d/openshift-uservols.exports
+chown -R nfsnobody.nfsnobody  /srv/nfs
+chmod -R 777 /srv/nfs
+done
+
+systemctl restart nfs-server
+----
+. Create 25 definition files for PVs `pv1` to `pv25` with a size of 5 GB:
++
+[source,text]
+----
+ssh master1.$GUID.internal
+sudo bash
+export GUID=`hostname|awk -F. '{print $2}'`
+echo $GUID
+
+export volsize="5Gi"
+mkdir /root/pvs
+for volume in pv{1..25} ; do
+cat << EOF > /root/pvs/${volume}
+{
+  "apiVersion": "v1",
+  "kind": "PersistentVolume",
+  "metadata": {
+    "name": "${volume}"
+  },
+  "spec": {
+    "capacity": {
+        "storage": "${volsize}"
+    },
+    "accessModes": [ "ReadWriteOnce" ],
+    "nfs": {
+        "path": "/srv/nfs/user-vols/${volume}",
+        "server": "support1.GUID.internal"
+    },
+    "persistentVolumeReclaimPolicy": "Recycle"
+  }
+}
+EOF
+echo "Created def file for ${volume}";
+done;
+----
+
+. Create 25 definition files for PVs `pv26` to `pv50` with a size of 10 GB:
++
+[source,text]
+----
+export volsize="10Gi"
+for volume in pv{26..50} ; do
+cat << EOF > /root/pvs/${volume}
+{
+  "apiVersion": "v1",
+  "kind": "PersistentVolume",
+  "metadata": {
+    "name": "${volume}"
+  },
+  "spec": {
+    "capacity": {
+        "storage": "${volsize}"
+    },
+    "accessModes": [ "ReadWriteMany" ],
+    "nfs": {
+        "path": "/srv/nfs/user-vols/${volume}",
+        "server": "support1.GUID.internal"
+    },
+    "persistentVolumeReclaimPolicy": "Retain"
+  }
+}
+EOF
+echo "Created def file for ${volume}";
+done;
+----
+
+. Use `oc create` to create all of the PVs you defined:
++
+[source,text]
+----
+cat pvs/* | oc create -f -
+----
+=== Validate the OpenShift cluster
+
+There are two basic types of validating and checking your environment, the
+Diagnostics Tool and the Ansible Health Checks.  Here, we'll run one simple
+execution of each.
+
+==== Diagnostics
+
+The OpenShift diagnostics tool provides a tremendous amount of information.
+
+. Connect to the master node to execute diagnostics
++
+[source,bash]
+----
+ssh master1.${GUID}.internal
+----
++
+. Execute the following to get a complete report of your cluster.
++
+[source,bash]
+----
+sudo -i
+oc adm diagnostics
+----
++
+[NOTE]
+You might get an error or two, and several warnings.  That's OK.  Your system is up and running.  These are just some
+aspects of OpenShift to think about and highlight as we work through this course.
++
+. Exit the master, returning to the bastion
++
+[source,bash]
+----
+exit
+----
+
+==== Ansible Health Checks
+
+The Ansible Inventory file that you created in this lab is required for running
+the Ansible Health Checks.
+
+. From the bastion host, execute the following as root.
++
+[source,bash]
+----
+ansible-playbook -i /root/my_ocp_inventory \
+    /usr/share/ansible/openshift-ansible/playbooks/byo/openshift-checks/health.yml
+----
++
+Expect the output to look similar to this.
++
+[source,text]
+----
+PLAY RECAP *************************************************************************************************************************************************************************************************************************************
+infranode1.e398.internal   : ok=42   changed=3    unreachable=0    failed=0
+infranode2.e398.internal   : ok=42   changed=3    unreachable=0    failed=0
+loadbalancer1.e398.internal : ok=28   changed=2    unreachable=0    failed=0
+localhost                  : ok=13   changed=0    unreachable=0    failed=0
+master1.e398.internal      : ok=43   changed=3    unreachable=0    failed=0
+master2.e398.internal      : ok=43   changed=3    unreachable=0    failed=0
+master3.e398.internal      : ok=43   changed=3    unreachable=0    failed=0
+node1.e398.internal        : ok=42   changed=3    unreachable=0    failed=0
+node2.e398.internal        : ok=42   changed=3    unreachable=0    failed=0
+node3.e398.internal        : ok=42   changed=3    unreachable=0    failed=0
+support1.e398.internal     : ok=28   changed=2    unreachable=0    failed=0
+
+
+INSTALLER STATUS *******************************************************************************************************************************************************************************************************************************
+Initialization             : Complete
+----
++
+Have a look through the output of the Ansible Health check to get a feeling for the kinds of
+variables it expects and how they relate to the system they've just deployed.  You can read the whole
+log here: `/var/log/ansible`
+
+This completes the Lab for the Highly Available OpenShift Installation.  Please take a well deserved break
+and move onto Module 4 - Authentication and Permissions.
