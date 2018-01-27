@@ -1,0 +1,310 @@
+:scrollbar:
+:noaudio:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+
+== Advanced CI/CD Pipeline (Binary Build) Lab Solutions
+
+:numbered:
+
+== Set Up Development and Production Projects in OpenShift
+
+. Create the OpenShift project to hold the development version of the `openshift-tasks` application. Make sure that automatic building is turned off. Finally, tag the built image as `TestingCandidate-1.0` and `ProdReady-1.0`:
++
+[source,bash]
+----
+oc new-project xyz-tasks-dev --display-name "Tasks Development"
+oc policy add-role-to-user edit system:serviceaccount:xyz-jenkins:jenkins -n xyz-tasks-dev
+oc new-build --binary=true --name="tasks" jboss-eap70-openshift:1.4
+oc new-app xyz-tasks-dev/tasks:TestingCandidate-1.0 --name=tasks --allow-missing-imagestream-tags=true
+oc set triggers dc/tasks --remove-all
+oc expose dc tasks --port 8080
+oc expose svc tasks
+----
+
+. Create the OpenShift project to hold the production version of the `openshift-tasks` application and set up for Blue/Green deployment by deploying two versions of the application (`tasks-green` and `tasks-blue`), initially exposing the `tasks-green` service as the `tasks` route:
++
+[source,bash]
+----
+oc new-project xyz-tasks-prod --display-name "Tasks Production"
+oc policy add-role-to-group system:image-puller system:serviceaccounts:xyz-tasks-prod -n xyz-tasks-dev
+oc policy add-role-to-user edit system:serviceaccount:xyz-jenkins:jenkins -n xyz-tasks-prod
+oc new-app xyz-tasks-dev/tasks:ProdReady-1.0 --name=tasks-green --allow-missing-imagestream-tags=true
+oc new-app xyz-tasks-dev/tasks:ProdReady-1.0 --name=tasks-blue --allow-missing-imagestream-tags=true
+oc set triggers dc/tasks-green --remove-all
+oc set triggers dc/tasks-blue --remove-all
+oc expose dc tasks-blue --port 8080
+oc expose dc tasks-green --port 8080
+oc expose svc/tasks-green --name tasks
+----
+
+== Build Pipeline
+
+In this section, you create a Jenkins pipeline to perform the following steps:
+
+* Checkout source code
+* Build WAR
+* Run unit tests
+* Perform code analysis
+* Publish to Nexus
+* Build OpenShift image using binary build
+* Deploy to test
+* Run integration tests
+* Deploy the new version to production (Blue/Green)
+* Get approval to switch to the new version
+* Switch to the new route
+
+The following steps describe how to build the Jenkins pipeline:
+
+. In Jenkins, create a job with the name `Tasks` and type `Pipeline`.
+
+. Use this Groovy pipeline script, either inline in the Jenkins job, or by storing it in the `openshift-tasks` Gogs repository and pointing the Jenkins job to it. Depending on the approach make sure to use the correct version of the `Checkout Source` stage. Make sure you double-check references to SkyDNS services and replace `<gogs_user>` and `<gogs_password>` with your Gogs user ID and password where necessary.
++
+[source,groovy]
+----
+#!groovy
+
+// Run this node on a Maven Slave
+// Maven Slaves have JDK and Maven already installed
+node('maven') {
+  // Make sure your nexus_openshift_settings.xml
+  // Is pointing to your nexus instance
+  def mvnCmd = "mvn -s ./nexus_openshift_settings.xml"
+
+  stage('Checkout Source') {
+    // Get Source Code from SCM (Git) as configured in the Jenkins Project
+    // Next line for inline script, "checkout scm" for Jenkinsfile from Gogs
+    //git 'http://gogs.xyz-gogs.svc.cluster.local:3000/CICDLabs/openshift-tasks.git'
+    checkout scm
+  }
+
+  // The following variables need to be defined at the top level and not inside
+  // the scope of a stage - otherwise they would not be accessible from other stages.
+  // Extract version and other properties from the pom.xml
+  def groupId    = getGroupIdFromPom("pom.xml")
+  def artifactId = getArtifactIdFromPom("pom.xml")
+  def version    = getVersionFromPom("pom.xml")
+
+  stage('Build war') {
+    echo "Building version ${version}"
+
+    sh "${mvnCmd} clean package -DskipTests"
+  }
+  stage('Unit Tests') {
+    echo "Unit Tests"
+    sh "${mvnCmd} test"
+  }
+  stage('Code Analysis') {
+    echo "Code Analysis"
+
+    // Replace xyz-sonarqube with the name of your project
+    sh "${mvnCmd} sonar:sonar -Dsonar.host.url=http://sonarqube.xyz-sonarqube.svc.cluster.local:9000/ -Dsonar.projectName=${JOB_BASE_NAME}"
+  }
+  stage('Publish to Nexus') {
+    echo "Publish to Nexus"
+
+    // Replace xyz-nexus with the name of your project
+    sh "${mvnCmd} deploy -DskipTests=true -DaltDeploymentRepository=nexus::default::http://nexus3.xyz-nexus.svc.cluster.local:8081/repository/releases"
+  }
+
+  stage('Build OpenShift Image') {
+    def newTag = "TestingCandidate-${version}"
+    echo "New Tag: ${newTag}"
+
+    // Copy the war file we just built and rename to ROOT.war
+    sh "cp ./target/openshift-tasks.war ./ROOT.war"
+
+    // Start Binary Build in OpenShift using the file we just published
+    // Replace xyz-tasks-dev with the name of your dev project
+    sh "oc project xyz-tasks-dev"
+    sh "oc start-build tasks --from-file=./ROOT.war -n xyz-tasks-dev"
+
+    openshiftVerifyBuild bldCfg: 'tasks', checkForTriggeredDeployments: 'false', namespace: 'xyz-tasks-dev', verbose: 'false', waitTime: ''
+    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'xyz-tasks-dev', namespace: 'xyz-tasks-dev', srcStream: 'tasks', srcTag: 'latest', verbose: 'false'
+  }
+
+  stage('Deploy to Dev') {
+    // Patch the DeploymentConfig so that it points to the latest TestingCandidate-${version} Image.
+    // Replace xyz-tasks-dev with the name of your dev project
+    sh "oc project xyz-tasks-dev"
+    sh "oc patch dc tasks --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"tasks\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"xyz-tasks-dev\", \"name\": \"tasks:TestingCandidate-$version\"}}}]}}' -n xyz-tasks-dev"
+
+    openshiftDeploy depCfg: 'tasks', namespace: 'xyz-tasks-dev', verbose: 'false', waitTime: '', waitUnit: 'sec'
+    openshiftVerifyDeployment depCfg: 'tasks', namespace: 'xyz-tasks-dev', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'false', waitTime: '', waitUnit: 'sec'
+    openshiftVerifyService namespace: 'xyz-tasks-dev', svcName: 'tasks', verbose: 'false'
+  }
+
+  stage('Integration Test') {
+    // TBD: Proper test
+    // Could use the OpenShift-Tasks REST APIs to make sure it is working as expected.
+
+    def newTag = "ProdReady-${version}"
+    echo "New Tag: ${newTag}"
+
+    // Replace xyz-tasks-dev with the name of your dev project
+    openshiftTag alias: 'false', destStream: 'tasks', destTag: newTag, destinationNamespace: 'xyz-tasks-dev', namespace: 'xyz-tasks-dev', srcStream: 'tasks', srcTag: 'latest', verbose: 'false'
+  }
+
+  // Blue/Green Deployment into Production
+  // -------------------------------------
+  def dest   = "tasks-green"
+  def active = ""
+
+  stage('Prep Production Deployment') {
+    // Replace xyz-tasks-dev and xyz-tasks-prod with
+    // your project names
+    sh "oc project xyz-tasks-prod"
+    sh "oc get route tasks -n xyz-tasks-prod -o jsonpath='{ .spec.to.name }' > activesvc.txt"
+    active = readFile('activesvc.txt').trim()
+    if (active == "tasks-green") {
+      dest = "tasks-blue"
+    }
+    echo "Active svc: " + active
+    echo "Dest svc:   " + dest
+  }
+  stage('Deploy new Version') {
+    echo "Deploying to ${dest}"
+
+    // Patch the DeploymentConfig so that it points to
+    // the latest ProdReady-${version} Image.
+    // Replace xyz-tasks-dev and xyz-tasks-prod with
+    // your project names.
+    sh "oc patch dc ${dest} --patch '{\"spec\": { \"triggers\": [ { \"type\": \"ImageChange\", \"imageChangeParams\": { \"containerNames\": [ \"$dest\" ], \"from\": { \"kind\": \"ImageStreamTag\", \"namespace\": \"xyz-tasks-dev\", \"name\": \"tasks:ProdReady-$version\"}}}]}}' -n xyz-tasks-prod"
+
+    openshiftDeploy depCfg: dest, namespace: 'xyz-tasks-prod', verbose: 'false', waitTime: '', waitUnit: 'sec'
+    openshiftVerifyDeployment depCfg: dest, namespace: 'xyz-tasks-prod', replicaCount: '1', verbose: 'false', verifyReplicaCount: 'true', waitTime: '', waitUnit: 'sec'
+    openshiftVerifyService namespace: 'xyz-tasks-prod', svcName: dest, verbose: 'false'
+  }
+  stage('Switch over to new Version') {
+    input "Switch Production?"
+
+    // Replace xyz-tasks-prod with the name of your
+    // production project
+    sh 'oc patch route tasks -n xyz-tasks-prod -p \'{"spec":{"to":{"name":"' + dest + '"}}}\''
+    sh 'oc get route tasks -n xyz-tasks-prod > oc_out.txt'
+    oc_out = readFile('oc_out.txt')
+    echo "Current route configuration: " + oc_out
+  }
+}
+
+// Convenience Functions to read variables from the pom.xml
+def getVersionFromPom(pom) {
+  def matcher = readFile(pom) =~ '<version>(.+)</version>'
+  matcher ? matcher[0][1] : null
+}
+def getGroupIdFromPom(pom) {
+  def matcher = readFile(pom) =~ '<groupId>(.+)</groupId>'
+  matcher ? matcher[0][1] : null
+}
+def getArtifactIdFromPom(pom) {
+  def matcher = readFile(pom) =~ '<artifactId>(.+)</artifactId>'
+  matcher ? matcher[0][1] : null
+}
+----
+
+== Set Up Web Deployment Hook
+
+To automate the build whenever new content is pushed to the `openshift-tasks` repository, set up a Git hook in Gogs. This way a Jenkins build is triggered whenever code is pushed to the `openshift-tasks` source repository on Gogs.
+
+. Open a browser and log in to Jenkins.
+
+. In the top right corner, click the down arrow next to your user name and select *Configure*.
+
+. Click *Show API Token* and make note of the API token that is displayed.
+
+. Open a browser, navigate to the Gogs server, log in, and go to the `CICDLabs/openshift-tasks` repository.
+
+. Click *Settings*, and then click *Git Hooks*.
+
+. Click the pencil next to *post-receive*.
+
+. Under the *Hook Content*, paste this script, replacing `<userid>` with your Jenkins user ID, `<apiToken>` with the API token you retrieved earlier, `<jenkinsService>` with the name of your Jenkins Service and `<jenkinsProject>` with the name of the OpenShift project your Jenkins Service is located in:
++
+[source,bash]
+----
+#!/bin/bash
+
+while read oldrev newrev refname
+do
+    branch=$(git rev-parse --symbolic --abbrev-ref $refname)
+    if [[ "$branch" == "master" ]]; then
+    	curl -k -X POST --user <userid>:<apiToken> http://<jenkinsService>.<jenkinsProject>.svc.cluster.local/job/Tasks/build
+    fi
+done
+----
++
+* This script signals the Jenkins `Tasks` build job each time a commit is made to the master branch.
+
+. Click *Update Hook*.
+
+== Trigger New Build
+
+Committing a new version of the application source code triggers a new build as a result of the Git hook you configured. It is good practice to increment the version number each time you make changes to your application. You can increment the version number manually or automatically.
+
+. Increment the version number:
+
+* Change the `openshift-tasks` source code to make sure you are seeing an updated version of your application after the pipeline completes.
+** Look near line 45 of the code--where the title of the page is rendered--in the `$HOME/openshift-tasks/src/main/webapp/index.js` file.
+
+* Increment the version number of the project each time code is pushed using Maven--for example, updating the version number (`VERSION=1.2`) with the next minor or major number (`VERSION=1.3`):
++
+[source,bash]
+----
+cd $HOME/openshift-tasks
+export VERSION=1.3
+mvn versions:set -f pom.xml -s nexus_settings.xml -DgenerateBackupPoms=false -DnewVersion=${VERSION}
+git commit -m "Increased version to ${VERSION}" pom.xml
+git push gogs master
+----
+
+. After a few minutes, when prompted, approve the switch to the new version.
+
+. Click *Proceed*.
+
+. Once the pipeline finishes successfully, verify that you can see the updated application.
+
+== Build Configuration with Pipeline
+
+To integrate the pipeline with the OpenShift web console, you create a build configuration that points to this pipeline. This build configuration must be in the same project as the Jenkins pod (unless you configure the `master-config.yaml` to point to another Jenkins instance).
+
+. Create the `tasks-pipeline.yaml` file:
++
+[source,yaml]
+----
+apiVersion: v1
+items:
+- kind: "BuildConfig"
+  apiVersion: "v1"
+  metadata:
+    name: "tasks-pipeline"
+  spec:
+    source:
+      type: "Git"
+      git:
+        uri: "http://gogs.xyz-gogs.svc.cluster.local:3000/CICDLabs/openshift-tasks"
+    strategy:
+      type: "JenkinsPipeline"
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: Jenkinsfile
+kind: List
+metadata: []
+----
++
+[NOTE]
+You are pointing to the Jenkinsfile in the Gogs repository, as you did in the Jenkins `Tasks` job. It is also possible to embed the entire pipeline script into the build configuration.
+
+. Create the build configuration in OpenShift:
++
+[source,bash]
+----
+oc project xyz-jenkins
+oc create -f tasks-pipeline.yaml
+----
+
+. In the OpenShift web console, switch to your Jenkins project and open the *Pipelines* view (under *Builds*).
+
+. Click *Start Pipeline* to trigger a new pipeline.
+
+. Click *View Log* to view the pipeline progression and follow along in Jenkins.

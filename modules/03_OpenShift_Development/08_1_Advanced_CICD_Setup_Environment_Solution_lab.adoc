@@ -1,0 +1,234 @@
+:scrollbar:
+:noaudio:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+
+== Advanced CI/CD Environment Setup Lab Solutions
+
+The solutions here assume that every software component should be deployed into its own project.
+
+In a shared environment make sure to replace `xyz` in project names with your initials to prevent conflicts with other students' projects.
+
+:numbered:
+
+== Set Up Nexus
+
+. Create a project named `Shared Nexus`, create a Nexus pod (using the latest image available on DockerHub), and create a route:
++
+[source,bash]
+----
+oc new-project xyz-nexus --display-name "Shared Nexus"
+oc new-app sonatype/nexus3:latest
+oc expose svc nexus3
+oc rollout pause dc nexus3
+----
+
+. Change the deployment strategy from `rolling` to `recreate`:
++
+[source,bash]
+----
+oc patch dc nexus3 --patch='{ "spec": { "strategy": { "type": "Recreate" }}}'
+----
+
+. Create a Persistent Volume Claim (PVC) and connect it to `/nexus-data`:
++
+[source,bash]
+----
+echo "apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nexus-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi" | oc create -f -
+
+oc set volume dc/nexus3 --add --overwrite --name=nexus3-volume-1 --mount-path=/nexus-data/ --type persistentVolumeClaim --claim-name=nexus-pvc
+----
+
+. Set up liveness and readiness probes for Nexus:
++
+[source,bash]
+----
+oc set probe dc/nexus3 --liveness --failure-threshold 3 --initial-delay-seconds 60 -- echo ok
+oc set probe dc/nexus3 --readiness --failure-threshold 3 --initial-delay-seconds 60 --get-url=http://:8081/repository/maven-public/
+oc rollout resume dc nexus3
+----
+
+. Once Nexus is deployed, set up Red Hat repositories using the default user ID (`admin`) and password (`admin123`).
++
+[source,bash]
+----
+curl -o setup_nexus3.sh -s https://raw.githubusercontent.com/wkulhanek/ocp_advanced_development_resources/master/nexus/setup_nexus3.sh
+chmod +x setup_nexus3.sh
+./setup_nexus3.sh admin admin123 http://$(oc get route nexus3 --template='{{ .spec.host }}')
+rm setup_nexus3.sh
+----
+
+* This creates a `maven-all-public` repository that is a proxy repository for all of the required artifacts.
+* It also creates a `releases` repository for the war files that we are about to build.
+
+== Set Up SonarQube
+
+. Deploy a persistent PostgreSQL database:
++
+[source,bash]
+----
+oc new-project xyz-sonarqube --display-name "Shared Sonarqube"
+oc new-app postgresql-persistent --param POSTGRESQL_USER=sonar --param POSTGRESQL_PASSWORD=sonar --param POSTGRESQL_DATABASE=sonar --param VOLUME_CAPACITY=4Gi -lapp=sonarqube_db
+----
+
+. Make sure that PostgreSQL is deployed before starting the SonarQube deployment:
++
+[source,bash]
+----
+oc new-app wkulhanek/sonarqube:6.4 -e SONARQUBE_JDBC_USERNAME=sonar -e SONARQUBE_JDBC_PASSWORD=sonar -e SONARQUBE_JDBC_URL=jdbc:postgresql://postgresql/sonar -lapp=sonarqube
+oc expose service sonarqube --port=9000
+oc rollout pause dc sonarqube
+----
++
+[TIP]
+The source for the Docker image is found at https://github.com/wkulhanek/docker-openshift-sonarqube.git.  The default user ID is `admin` and password is `admin`.
+
+. Set up liveness and readiness probes for SonarQube:
++
+[source,bash]
+----
+oc set probe dc/sonarqube --liveness --failure-threshold 3 --initial-delay-seconds 60 -- echo ok
+oc set probe dc/sonarqube --readiness --failure-threshold 3 --initial-delay-seconds 60 --get-url=http://:9000/about
+oc rollout resume dc sonarqube
+----
+
+== Set Up Gogs
+
+If Gogs is not already running, refer to the solution in the _Application Configuration Lab_ for setup instructions.
+
+. Install the `openshift-tasks` source code into Gogs:
+
+.. In Gogs create an organization named `CICDLabs`.
+
+.. Under the `CICDLabs` organization create a repository called `openshift-tasks`.
+
+.. Clone the source code from GitHub and push it to Gogs:
++
+[IMPORTANT]
+Make sure to replace `<gogs_user>` and `<gogs_password>` with your credentials in this command:
++
+[source,bash]
+----
+cd $HOME
+git clone https://github.com/wkulhanek/openshift-tasks.git
+cd $HOME/openshift-tasks
+git remote add gogs http://<gogs_user>:<gogs_password>@$(oc get route gogs -n xyz-gogs --template='{{ .spec.host }}')/CICDLabs/openshift-tasks.git
+git push -u gogs master
+----
+
+. Set up `nexus_settings.xml` for local builds, making sure that `<url>` points to your specific Nexus URL:
++
+[source,xml]
+----
+<?xml version="1.0"?>
+<settings>
+  <mirrors>
+    <mirror>
+      <id>Nexus</id>
+      <name>Nexus Public Mirror</name>
+      <url>http://nexus3-xyz-nexus.apps.na1.openshift.opentlc.com/repository/maven-all-public/</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+  <servers>
+  <server>
+    <id>nexus</id>
+    <username>admin</username>
+    <password>admin123</password>
+  </server>
+</servers>
+</settings>
+----
++
+[TIP]
+This file is located in the `$HOME/openshift-tasks` directory.
+
+. Set up `nexus_openshift_settings.xml` for builds within the OpenShift environment (Jenkins), making sure that the OpenShift internal SkyDNS name for Nexus is in the `<url>` field:
++
+[source,xml]
+----
+<?xml version="1.0"?>
+<settings>
+  <mirrors>
+    <mirror>
+      <id>Nexus</id>
+      <name>Nexus Public Mirror</name>
+      <url>http://nexus3.xyz-nexus.svc.cluster.local:8081/repository/maven-all-public/</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+  <servers>
+  <server>
+    <id>nexus</id>
+    <username>admin</username>
+    <password>admin123</password>
+  </server>
+</servers>
+</settings>
+----
++
+[TIP]
+This file is found in the `$HOME/openshift-tasks` directory.
+
+. Commit and Push the updated settings files to Gogs:
++
+[source,bash]
+----
+git commit -m "Updated Settings" nexus_settings.xml nexus_openshift_settings.xml
+git push gogs master
+----
+
+== Test Local Workstation Build
+
+If your workstation is not set up to build Java EE applications using Maven, you may skip this section.
+
+. Make sure that you can build the `openshift-tasks` application:
++
+[source,bash]
+----
+cd $HOME/openshift-tasks
+mvn clean install -DskipTests=true -s ./nexus_settings.xml
+----
+
+. Run the unit tests:
++
+[source,bash]
+----
+mvn test -s ./nexus_settings.xml
+----
+
+. Run the code analysis tests:
++
+[source,bash]
+----
+mvn sonar:sonar -s ./nexus_settings.xml -Dsonar.host.url=http://$(oc get route sonarqube -n xyz-sonarqube --template='{{ .spec.host }}')
+----
+
+* When the build and tests succeed without error, you are ready to proceed.
+
+== Set Up Jenkins
+
+. Create a new project called `xyz-jenkins` with a display name of `Shared Jenkins`:
++
+[source,bash]
+----
+oc new-project xyz-jenkins --display-name "Shared Jenkins"
+----
+
+. Set up a persistent Jenkins instance with 1 GB of memory (otherwise Jenkins crashes frequently) and a persistent volume claim of 4 GB:
++
+[source,bash]
+----
+oc new-app jenkins-persistent --param ENABLE_OAUTH=true --param MEMORY_LIMIT=1Gi --param VOLUME_CAPACITY=4Gi
+----

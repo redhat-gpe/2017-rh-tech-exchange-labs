@@ -1,0 +1,338 @@
+:scrollbar:
+:noaudio:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+
+== Advanced Deployments Lab Solutions
+
+:numbered:
+
+== Explore A/B Deployment
+
+=== Set Up A/B Deployment
+
+. Set up the project:
++
+[source,text]
+----
+oc new-project xyz-deployment
+----
++
+[TIP]
+Make sure to replace `xyz` with your initials.
+
+. Deploy two version of the same application--one showing cats and the other showing cities:
++
+[source,text]
+----
+oc new-app --name='cotd1' -l name='cotd1' php~https://github.com/wkulhanek/cotd.git -e SELECTOR=cats
+oc new-app --name='cotd2' -l name='cotd2' php~https://github.com/wkulhanek/cotd.git -e SELECTOR=cities
+----
+
+. Wait until the builds have finished and the pods are running.
+. Verify that the services exist:
++
+[source,text]
+----
+oc get service
+----
+
+=== Use A/B Deployment
+
+. Use either the command line or UI to create the A/B route:
+
+* Option 1: Create the A/B route using the command line:
++
+[source,text]
+----
+oc expose service cotd1 --name='abcotd' -l name='cotd'
+oc set route-backends abcotd cotd1=50 cotd2=50
+----
+
+* Option 2: Use the UI to create the A/B route:
+
+.. In your project, click *Create Route* for the `cotd1` service.
+.. Give the route a distinct name, such as `abcotd`, but not `cotd1` or `cotd2`.
+.. Click the *Split traffic across multiple services* link.
+.. Select the other service (`cotd2`) as the alternate service.
+.. Add `50` and `50` as the weights.
+.. Click *Create*.
+
+. Annotate the route to provide `roundrobin` load balancing over the services:
++
+[source,text]
+----
+oc annotate route/abcotd haproxy.router.openshift.io/balance=roundrobin
+----
+
+. Verify that the number of cats/cities matches your expected results from the specified service weights (for example, 80/20 results in four of one and one of the other for every five requests):
++
+[source,text]
+----
+while true; do curl -s http://<abc route>/item.php | grep "data/images" | awk '{print $5}'; sleep 1; done
+----
++
+[TIP]
+Replace `<abc route>` with your specific AB Route.
+
+. Update the weight by 20%:
++
+[source,text]
+----
+oc set route-backends abcotd --adjust cotd2=+20%
+----
+
+. Update the routing weights and verify that the new weights are in effect:
++
+[source,text]
+----
+oc set route-backends abcotd cotd1=80 cotd2=20
+----
+
+== Explore Blue/Green Deployment
+
+=== Set Up Blue/Green Deployment
+
+. Set up one `cotd` application serving cats (the Blue application):
++
+[source,text]
+----
+oc new-app --name='blue' -l name='blue' php~https://github.com/wkulhanek/cotd.git -e SELECTOR=cats
+----
+
+. Expose the route as `bluegreen`:
++
+[source,text]
+----
+oc expose svc/blue --name=bluegreen
+----
+
+. Set up another `cotd` application serving cities (the Green application):
++
+[source,text]
+----
+oc new-app --name='green' -l name='green' php~https://github.com/wkulhanek/cotd.git -e SELECTOR=cities
+----
+
+. In a terminal window, start a `curl` loop:
++
+[source,text]
+----
+while true; do curl -s http://<bluegreen route>/item.php | grep "data/images" | awk '{print $5}'; sleep 1; done
+----
++
+[TIP]
+Replace `<bluegreen route>` with your specific Blue/Green route.
+
+=== Use Blue/Green Deployment
+
+. Move traffic over to the new application instance (watch the `curl` terminal window to see it change):
++
+[source,text]
+----
+oc patch route/bluegreen -p '{"spec":{"to":{"name":"green"}}}'
+----
+
+. Modify the Blue application to show pets:
++
+[source,text]
+----
+oc set env dc/blue SELECTOR=pets
+----
+
+. Keep `curl` running and move the traffic back to the original Blue application:
++
+[source,text]
+----
+oc patch route/bluegreen -p '{"spec":{"to":{"name":"blue"}}}'
+----
+
+== Explore Probes
+
+You use the previous two `cotd` applications: `cotd1` and `cotd2`. And you add readiness and liveness probes to both pods.
+
+[source,text]
+----
+oc set probe dc/cotd1 --readiness --get-url=http://:8080/item.php --initial-delay-seconds=2
+oc set probe dc/cotd2 --readiness --get-url=http://:8080/item.php --initial-delay-seconds=2
+
+oc set probe dc/cotd1 --liveness --get-url=http://:8080/item.php --initial-delay-seconds=2
+oc set probe dc/cotd2 --liveness --get-url=http://:8080/item.php --initial-delay-seconds=2
+----
+
+
+== Jobs and Cron Jobs
+
+Your first job simply prints out a message to `stdout`. When the job is finishes running you can examine the pod logs to verify that the message printed.
+
+=== Set Up a Job
+
+. Create a new job that prints a message:
++
+[source,bash]
+----
+echo "apiVersion: batch/v1
+kind: Job
+metadata:
+  name: printmessage
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: printmessage
+    spec:
+      containers:
+      - name: printmessage
+        image: busybox
+        command: ["sh", "-c", "echo 'Hello from job'"]
+      restartPolicy: Never" | oc create -f -
+----
+
+. Verify that the job was created and is running a pod:
++
+[source,bash]
+----
+$ oc get pod
+NAME                 READY     STATUS    RESTARTS   AGE
+printmessage-rhc9j   1/1       Running   0          4s
+
+$ oc get pod
+NAME                 READY     STATUS      RESTARTS   AGE
+printmessage-rhc9j   0/1       Completed   0          6s
+----
+
+. Verify that the message was written:
++
+[source,bash]
+----
+oc logs -f printmessage-rhc9j
+Hello from job
+----
+
+. Clean up the job:
++
+[source,bash]
+----
+oc delete job printmessage
+----
+. Change the number of parallel job executions to 4 and the number of completions to 8:
++
+[source,bash]
+----
+echo "apiVersion: batch/v1
+kind: Job
+metadata:
+  name: printmessage
+spec:
+  parallelism: 4
+  completions: 8
+  template:
+    metadata:
+      name: printmessage
+    spec:
+      containers:
+      - name: printmessage
+        image: busybox
+        command: ["sh", "-c", "echo 'Hello from job'"]
+      restartPolicy: Never" | oc create -f -
+----
+
+* Observe that OpenShift now creates 8 containers running this job, 4 at a time:
++
+[source,bash]
+----
+$ oc get pod
+NAME                 READY     STATUS              RESTARTS   AGE
+printmessage-1zdvd   0/1       ContainerCreating   0          3s
+printmessage-9m9ts   0/1       ContainerCreating   0          3s
+printmessage-kv8md   0/1       ContainerCreating   0          3s
+printmessage-zkt9b   0/1       ContainerCreating   0          3s
+
+$ oc get pod
+NAME                 READY     STATUS              RESTARTS   AGE
+printmessage-1zdvd   0/1       ContainerCreating   0          7s
+printmessage-9m9ts   0/1       Completed           0          7s
+printmessage-b8b73   0/1       ContainerCreating   0          0s
+printmessage-fjkbc   0/1       ContainerCreating   0          3s
+printmessage-kv8md   0/1       Completed           0          7s
+printmessage-zkt9b   0/1       Completed           0          7s
+
+$ oc get pod
+NAME                 READY     STATUS      RESTARTS   AGE
+printmessage-1zdvd   0/1       Completed   0          2m
+printmessage-6654q   0/1       Completed   0          1m
+printmessage-9m9ts   0/1       Completed   0          2m
+printmessage-b8b73   0/1       Completed   0          1m
+printmessage-d4js0   0/1       Completed   0          1m
+printmessage-fjkbc   0/1       Completed   0          1m
+printmessage-kv8md   0/1       Completed   0          2m
+printmessage-zkt9b   0/1       Completed   0          2m
+----
+
+. Delete the job:
++
+[source,bash]
+----
+oc delete job printmessage
+----
+
+=== Set Up a Cron Job
+
+You are setting up a Cron job that runs every minute and prints the current date and time to `stdout`.
+
+. Create the Cron job:
++
+[source,bash]
+----
+echo "apiVersion: batch/v2alpha1
+kind: CronJob
+metadata:
+  name: printdate
+spec:
+  schedule: "*/1 * * * ?"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: printdate
+            image: busybox
+            command: ["sh",  "-c", "date"]
+          restartPolicy: Never" | oc create -f -
+----
+. Verify that the job is running every minute:
++
+[source,bash]
+----
+oc get pod
+NAME                         READY     STATUS      RESTARTS   AGE
+printdate-1492506540-7v2kd   0/1       Completed   0          6m
+printdate-1492506600-cv33b   0/1       Completed   0          5m
+printdate-1492506660-vnck5   0/1       Completed   0          4m
+printdate-1492506720-dsltw   0/1       Completed   0          3m
+printdate-1492506780-pmwn8   0/1       Completed   0          2m
+printdate-1492506840-05p88   0/1       Completed   0          1m
+
+$ oc logs printdate-1492506540-7v2kd
+Tue Apr 18 09:09:03 UTC 2017
+$ oc logs printdate-1492506780-pmwn8
+Tue Apr 18 09:13:04 UTC 2017
+----
+. Clean up the Cron job:
++
+[source,bash]
+----
+oc delete cronjob printdate
+----
+
+== Cleanup
+
+. Delete the `xyz-deployment` project to free up resources.
++
+[source,bash]
+----
+oc delete project xyz-deployment
+----

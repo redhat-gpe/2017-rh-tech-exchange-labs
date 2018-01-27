@@ -1,0 +1,335 @@
+:scrollbar:
+:noaudio:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+
+== Advanced Development Lab Solutions
+
+:numbered:
+== Use Downward API
+
+=== Prepare Project
+
+. Set up the project:
++
+[source,text]
+----
+oc new-project xyz-development
+oc new-app https://github.com/wkulhanek/PrintEnv
+oc expose svc printenv
+oc get route printenv|awk '{print $2}'|grep printenv
+----
++
+. Using the route that you just created, use `curl` to retrieve the currently available environment variables:
++
+[source,text]
+----
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)|jq -S
+----
+
+=== Display `POD_NAME` and `POD_NAMESPACE` Through Environment Variables
+
+. Edit the `printenv` deployment configuration to add `POD_NAME` and `POD_NAMESPACE` environment variables:
++
+[source,yaml]
+----
+spec:
+  containers:
+  - image: 172.30.1.1:5000/xyz-development/printenv@sha256:7d5d13f0ac924a7f34ebd09361f472f0af1cb5f64e52748dd01f27292ddbd1bc
+    imagePullPolicy: Always
+    name: printenv
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    env:
+      - name: POD_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+      - name: POD_NAMESPACE
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.namespace
+----
++
+[NOTE]
+`metadata.name` and `metadata.namespace` are the only fields that are available as environment variables.
++
+. Use `curl` to validate that the values are populated:
++
+[source,text]
+----
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)|jq -S
+----
+
+=== Display `POD_LABELS` and `POD_ANNOTATIONS` Through Volume Mount
+
+. Change the container properties to access all available fields from a volume:
++
+[source,yaml]
+----
+  spec:
+    containers:
+    - image: 172.30.1.1:5000/xyz-development/printenv@sha256:7d5d13f0ac924a7f34ebd09361f472f0af1cb5f64e52748dd01f27292ddbd1bc
+      imagePullPolicy: Always
+      name: printenv
+      ports:
+      - containerPort: 8080
+        protocol: TCP
+      resources: {}
+      terminationMessagePath: /dev/termination-log
+      volumeMounts:
+        - name: podinfo
+          mountPath: /downward
+          readOnly: false
+    dnsPolicy: ClusterFirst
+    restartPolicy: Always
+    securityContext: {}
+    terminationGracePeriodSeconds: 30
+    volumes:
+    - name: podinfo
+      metadata:
+        items:
+          - name: "pod_name"
+            fieldRef:
+              fieldPath: metadata.name
+          - name: "pod_namespace"
+            fieldRef:
+              fieldPath: metadata.namespace
+          - name: "pod_labels"
+            fieldRef:
+              fieldPath: metadata.labels
+          - name: "pod_annotations"
+            fieldRef:
+              fieldPath: metadata.annotations
+test: false
+----
++
+. Check that the files in the volume are populated using the `READ_FROM_FILE` environment variable:
++
+[source,text]
+----
+oc set env dc/printenv READ_FROM_FILE=/downward/pod_name
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+oc set env dc/printenv READ_FROM_FILE=/downward/pod_namespace
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+oc set env dc/printenv READ_FROM_FILE=/downward/pod_labels
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+oc set env dc/printenv READ_FROM_FILE=/downward/pod_annotations
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+----
++
+[TIP]
+====
+It may be quicker to use `oc rsh` to list the files mounted in the pod:
+
+[source,text]
+----
+$ oc rsh $(oc get pod|grep printenv|grep Running|awk '{print $1}')
+sh-4.2$ cat /downward/pod_name
+sh-4.2$ cat /downward/pod_namespace
+sh-4.2$ cat /downward/pod_labels
+sh-4.2$ cat /downward/pod_annotations
+sh-4.2$ exit
+----
+====
+
+== Set Up Build Configurations
+
+=== Create Build Secrets
+
+. Create a new repository named `openshift-tasks-private` in Gogs and make it private.
+.. Make a note of the Gogs repository path.
+** Expect it to resemble `http://<gogs-route>/<gogs-user>/openshift-tasks-private.git`.
+.. Make a copy of the `openshift-tasks` repository and push it into Gogs:
++
+[source,text]
+----
+cd $HOME
+git clone https://github.com/wkulhanek/openshift-tasks.git
+cd $HOME/openshift-tasks
+git remote add private <repository path>
+git push private master
+----
++
+[NOTE]
+Expect to be prompted for your Gogs user ID and password.
++
+. Create a new application pointing to this repository:
++
+[source,text]
+----
+oc new-app eap64-basic-s2i --param APPLICATION_NAME=tasks --param SOURCE_REPOSITORY_URL=http://gogs.xyz-gogs.svc.cluster.local:3000/wkulhanek/openshift-tasks-private.git --param SOURCE_REPOSITORY_REF=master --param CONTEXT_DIR=/
+----
++
+[NOTE]
+Replace `xyz-gogs` with your Gogs project name and `wkulhanek` with your Gogs user ID.
++
+* A build error is displayed:
++
+[source,text]
+----
+$ oc logs -f tasks-1-build
+Pulling image "registry.access.redhat.com/jboss-eap-6/eap64-openshift@sha256:e5d1564aa7eb8c219fd2e1005ae325ceb025661a0db6b9eb80e2b875da3c789a" ...
+Pulling image "registry.access.redhat.com/jboss-eap-6/eap64-openshift@sha256:e5d1564aa7eb8c219fd2e1005ae325ceb025661a0db6b9eb80e2b875da3c789a" ...
+Cloning "http://gogs.xyz-gogs.svc.cluster.local:3000/CICDLabs/openshift-tasks-private.git" ...
+error: build error: failed to fetch requested repository "http://gogs.xyz-gogs.svc.cluster.local:3000/wkulhanek/openshift-tasks-private.git" with provided credentials
+----
+
+. Create a secret to hold the credentials used to access the Gogs (GitHub) repository:
++
+[source,text]
+----
+oc secrets new-basicauth gogs-secret --username=<user_name> --password=<password>
+----
+* Builds are run with the builder service account, which must have access to any source clone secrets used. Access is granted with the following command:
++
+[source,text]
+----
+oc secrets link builder gogs-secret
+----
++
+. Set the build secret:
++
+[source,text]
+----
+oc set build-secret --source bc/tasks gogs-secret
+----
++
+. Start a new build to pick up these credentials:
++
+[source,text]
+----
+oc start-build tasks
+----
+* Expect this build to finish successfully.
+
+
+=== Cache Artifacts
+
+The EAP64 image supports saving build artifacts between builds, which dramatically reduces build times. The build configuration needs to reflect that.
+
+. Add `incremental` to the build configuration using `oc edit bc tasks`:
++
+[source,yaml]
+----
+strategy:
+  type: "Source"
+  forcePull: true
+  sourceStrategy:
+    from:
+      kind: "ImageStreamTag"
+      name: "jboss-eap64-openshift:1.4"
+      namespace: openshift
+    incremental: true
+----
++
+. Start another build and examine the build logs to make sure the change was applied:
++
+[source,text]
+----
+oc start-build tasks
+oc logs -f tasks-3-build
+----
+
+=== Implement Binary Builds
+
+In this section, you use the Java S2I image to demonstrate binary builds with an existing Spring Boot application.
+
+==== Create Spring Boot application
+
+. Check if the OpenJDK image stream is already loaded to OpenShift:
++
+[source,text]
+----
+oc get is redhat-openjdk18-openshift -n openshift
+----
++
+.. If it is missing, import the image stream:
++
+[source,text]
+----
+oc import-image my-redhat-openjdk-18/openjdk18-openshift --from=registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift --confirm
+----
++
+. Create a new Java Spring Boot application from https://github.com/wkulhanek/ola.git:
++
+[source,text]
+----
+oc new-app redhat-openjdk18-openshift~https://github.com/wkulhanek/ola.git
+oc expose svc ola
+----
++
+. Make sure your application is running:
++
+[source,text]
+----
+curl http://$(oc get route|grep -v NAME|awk '{print $2}')/api/ola
+----
+
+==== Deploy Using Binary Build
+
+. Build the application locally:
++
+[source,text]
+----
+cd $HOME
+git clone https://github.com/wkulhanek/ola.git
+cd ola
+mvn clean package
+----
+* This creates the `$HOME/ola/target/ola.jar` file.
+
+. Test the application:
++
+[source,text]
+----
+java -jar $HOME/ola/target/ola.jar
+----
++
+. Once the application has started, test the application from another terminal window:
++
+[source,text]
+----
+curl http://127.0.0.1:8080/api/ola
+----
++
+. Create a binary build:
++
+[source,text]
+----
+oc new-build --binary=true --name=ola-binary -i=redhat-openjdk18-openshift
+----
+* This build now expects the binary deployment artifact from the local file system.
+
+. Start a new build and stream the compiled file into the build:
++
+[source,text]
+----
+oc start-build ola-binary --from-file=$HOME/ola/target/ola.jar --follow
+----
++
+[NOTE]
+Expect to see the build finish very quickly when you execute the `oc start-build` command. Binary Build copies a pre-built artifact and then moves it into the correct directory. In this case, it copies the `ola.jar` file into the S2I image and then moves it into `/deployments`.
++
+. Once the build finishes, deploy the application as usual:
++
+[source,text]
+----
+oc new-app ola-binary
+oc expose svc/ola-binary --port=8080
+curl http://$(oc get route ola-binary|grep -v NAME|awk '{print $2}')/api/ola
+----
+
+== Clean Up
+
+. Once you are finished with this lab, delete the projects to free up resources in the shared environment:
++
+[source,bash]
+----
+oc delete project xyz-development
+----

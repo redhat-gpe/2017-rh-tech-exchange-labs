@@ -1,0 +1,787 @@
+:course_name: Red Hat OpenShift Container Platform 3 Implementation
+:labname: Assign Policies and Permissions
+
+:opencf: link:https://labs.opentlc.com/[OPENTLC lab portal]
+:account_management: link:https://www.opentlc.com/account/[OPENTLC Account Management page]
+:ocp_docs: link:https://docs.openshift.com/container-platform/3.7/welcome/index.html[OpenShift Container Platform]
+:catalog_name: OPENTLC OpenShift Labs
+:catalog_item_name: OpenShift Implementation HA Lab
+
+:diagram:benefits:scrollbar:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+== {labname}
+
+=== Lab Goals
+
+In this lab, you deploy and configure OpenShift 3 on a group of servers to meet
+ these requirements:
+* Create and Assign Policies and Permissions
+* Explore Docker Registry Security and Image Pull Policies
+* Allow Production Administrators to Run Unsafe Containers
+* Disable Projectq Self-Provisioning
+
+=== Lab Activities
+
+After this lab you will be able to:
+
+* Create and Assign Policies and Permissions
+* Manage user Roles to allow and restrict capabilities
+* Configure Platform Administrator Access (non-root user)
+* Explore Docker Registry Security and Image Pull Policies
+* Manage SCCs to allow specific groups to run Unsafe Containers
+* Assign Administrative Privileges to Groups
+* Create "Service Accounts" and assign roles to them
+* Disable Project Self-Provisioning
+* Configure Project Request Message
+* Manage User's, Service Account's, Pod's permissions and capabilities using SCCs and RBAC (Roles and Role Bindings.)
+* Manage user groups and permissions to simulate developer/ops team scenario
+* Troubleshoot application deployments with insufficient privileges.
+
+=== Important Notes
+
+[IMPORTANT]
+
+Read these notes. They help you successfully navigate the lab.
+
+* You run many commands in this lab remotely from the `bastion` or `master1`
+ host. Make sure you run the commands from the right host.
+
+* This lab is long and extremely important. All future labs depend on the
+ success of this section.
+
+* Depending on your workstation's screen size, resolution, and browser, some
+ commands may lose their intended formatting, appearing with extra line breaks.
+  Even though this lab endeavors to avoid this pitfall, the formatting still
+   "breaks" a command sometimes. Pay attention to the command you paste in and
+    correct the formatting if necessary.
+
+:numbered:
+
+== Lab: {labname}
+
+=== Set Up Lab Environment
+
+If you have not done so yet, provision the environment required to complete the
+ labs in the _{course_name}_ training.
+
+. Navigate to the {opencf}.
+
+. Log in to the portal using your OPENTLC credentials and select the
+ *{catalog_item_name}* to provision your environment.
+
+[TIP]
+If you need additional information, use the lab instructions in earlier modules
+ of this course.
+
+
+.Provisioned Environment Hosts
+
+These are the hosts that have been deployed in your lab environment:
+
+* Bastion (administration) server: `bastion.$GUID.example.opentlc.com`, `bastion.$GUID.internal`
+* NFS server: `support1.$GUID.example.opentlc.com`, `support1.$GUID.internal`
+* Load balancer: `loadbalancer.$GUID.example.opentlc.com`, `loadbalancer1.$GUID.internal`
+* 3 OpenShift master nodes: `master{1,2,3}.$GUID.example.opentlc.com`, `master{1,2,3}.$GUID.internal`
+* 2 OpenShift infrastructure nodes: `infranode{1,2}.$GUID.example.opentlc.com`, `infranode{1,2}.$GUID.internal`
+* 2 OpenShift worker node: `node{1,2}.$GUID.example.opentlc.com`, `node{1,2}.$GUID.internal`
+* IPA Server: `ipa.shared.example.opentlc.com` (shared resource for all students)
+
+==== Preliminary Important Notes
+
+. *GUID*: Each lab environment is assigned a global unique identifier (GUID)
+ with four characters, which you receive by email when provisioning your lab
+  environment. *From this point on, replace _GUID_ with your lab's four-character GUID.*
+
+. *Remote Access*: The bastion host is the only host that you should access with
+ SSH outside the lab environment. External SSH for all other hosts is blocked.
+  From the bastion host, you can access the other hosts internally through SSH.
+   As described earlier, you must access the system (not as `root`) with your
+    private SSH key and OPENTLC login.
+. *Performance*: The lab environment is cloud based and cost-efficient, so you
+ can access it over the WAN from anywhere. However, do not expect its
+  performance to match a bare-metal environment.
+
+. *Bastion host* is *not* an OpenShift cluster member or part of the OpenShift
+ environment. The bastion host mimics your client's infrastructure or your
+  laptop or desktop that is connected to the client's local area network (LAN).
+
+[TIP]
+It is recommended to use a terminal multiplexing tool, such as
+ *tmux* or *screen*, which keeps your place in the session if you are
+  disconnected from your environment. You can install their packages after
+   setting up the `rhel` repositories `yum install tmux`.
+If you use tmux, type *Ctrl+B* (to enter "scroll mode") + page up or down to
+ scroll, and use the *Esc* key to exit scroll mode.
+You can detach from tmux : `Ctrl+B  D` or simply close you terminal. To attach
+ again an existing tmux session, run the command `tmux attach` once you're
+  connected to the bastion host.
+
+=== Create and Assign Policies and Permissions
+
+
+In this section, you create projects and policies and assign them to different
+ groups. You also explore how to grant cluster administration roles.
+
+
+==== Assign Administrative Privileges to Groups
+
+Assign roles to groups in projects or the cluster according to these criteria:
+[cols="1,1,2",caption="",options="header"]
+|====
+| Group            | Role            | Projects/Cluster
+| `portalapp`      | `admin`         | `portalapp-dev` and `portalapp-test` projects
+| `paymentapp`     | `admin`         | `paymentapp-dev` and `paymentapp-test` projects
+| `ocp-production` | `admin`         | `portalapp-prod` and `paymentapp-prod` projects
+| `ocp-platform`   | `cluster-admin` | OpenShift cluster
+|====
+
+[NOTE]
+Most of the commands in this section run on the `master` host.
+
+. Create the projects for the `portalapp` and `paymentapp` applications:
++
+[source,bash]
+----
+export APPNAME=portalapp
+export APPTEXT="Portal App"
+oc adm new-project ${APPNAME}-dev --display-name="${APPTEXT} Development"
+oc adm new-project ${APPNAME}-test --display-name="${APPTEXT} Testing"
+oc adm new-project ${APPNAME}-prod --display-name="${APPTEXT} Production"
+
+export APPNAME=paymentapp
+export APPTEXT="Payment App"
+oc adm new-project ${APPNAME}-dev --display-name="${APPTEXT} Development"
+oc adm new-project ${APPNAME}-test --display-name="${APPTEXT} Testing"
+oc adm new-project ${APPNAME}-prod --display-name="${APPTEXT} Production"
+----
+
+* Expect output similar to this:
++
+[source,bash]
+----
+Created project portalapp-dev
+Created project portalapp-test
+Created project portalapp-prod
+Created project paymentapp-dev
+Created project paymentapp-test
+Created project paymentapp-prod
+----
+
+. Check that your projects have been created:
++
+[source,bash]
+----
+oc get projects  | grep App
+----
+
+* Expect output similar to this:
++
+[source,bash]
+----
+paymentapp-dev                      Payment App Development   Active
+paymentapp-prod                     Payment App Production    Active
+paymentapp-test                     Payment App Testing       Active
+portalapp-dev                       Portal App Development    Active
+portalapp-prod                      Portal App Production     Active
+portalapp-test                      Portal App Testing        Active
+----
+
+. Assign administrative privileges to the developer groups ("portalapp" and
+ "paymentapp") for their respective projects--in this case, using the default
+  `admin` role OpenShift:
++
+[source,bash]
+----
+oc adm policy add-role-to-group admin portalapp -n portalapp-dev
+oc adm policy add-role-to-group admin portalapp -n portalapp-test
+
+oc adm policy add-role-to-group admin paymentapp -n paymentapp-dev
+oc adm policy add-role-to-group admin paymentapp -n paymentapp-test
+----
+
+* Expect output similar to this:
++
+[source,bash]
+----
+role "admin" added: "portalapp"
+role "admin" added: "portalapp"
+role "admin" added: "paymentapp"
+role "admin" added: "paymentapp"
+----
+
+
+. Bind the "admin" role to the administrators group on the production projects:
++
+[source,bash]
+----
+oc adm policy add-role-to-group admin ocp-production -n portalapp-prod
+oc adm policy add-role-to-group admin ocp-production -n paymentapp-prod
+----
++
+NOTE: The "admin" role is a local policy role and is scoped "per project"
+
+. Examine the policy bindings for either of these projects to verify success:
++
+[source,bash]
+----
+oc describe rolebinding.rbac -n paymentapp-dev
+----
++
+* Expect the the output to be similar to the following:
++
+[source,bash]
+----
+Name:           admin
+Labels:         <none>
+Annotations:    <none>
+Role:
+  Kind: ClusterRole
+  Name: admin
+Subjects:
+  Kind  Name            Namespace
+  ----  ----            ---------
+  Group paymentapp
+... OUTPUT OMITTED ...
+... OUTPUT OMITTED ...
+----
+
+. Verify that the groups are given the `admin` role in
+ their respective projects.
+
+. Add the `cluster-admin` role to the `ocp-platform` group:
++
+[source,bash]
+----
+oc adm policy add-cluster-role-to-group cluster-admin ocp-platform
+----
+
+. Log out of the web console and log in again as one of the platform
+ administrators--for example, `david`.
+
+* Expect to see all of the projects including the OpenShift `default` project.
+
+
+
+==== Explore Docker Registry Security and Image Pull Policies
+
+In this section, you explore how to set policies allowing one project
+ to view and pull images from another project. You allow service accounts
+  from the `paymentapp-prod` and `paymentapp-test` to pull images created in the
+   `paymentapp-dev` project.
+
+
+===== Deploy the S2I Application
+
+. As the `marina` user, log in using the command line and switch to the "paymentapp-dev" project:
++
+[source,bash]
+----
+oc login -u marina -p 'r3dh4t1!'
+oc project paymentapp-dev
+----
+
+. Use `oc new-app` to build the `sinatra` example in the
+`paymentapp-dev` project:
++
+[source,bash]
+----
+oc new-app ruby~https://github.com/openshift/sinatra-example --name=sinatra -n paymentapp-dev
+----
++
+NOTE: Note that you cal already see Marina's projects as she is part of the "paymentapp" group.
+
+
+. Wait for the build to complete, the build might take a minute or two to start:
++
+[source,bash]
+----
+oc logs -f build/sinatra-1 -n paymentapp-dev
+----
++
+* important output similar to the following:
++
+[source,bash]
+----
+... OUTPUT OMITTED ...
+... OUTPUT OMITTED ...
+---> Cleaning up unused ruby gems ...
+Running `bundle clean   --verbose` with bundler 1.13.7
+Found no changes, using resolution from the lockfile
+Pushing image docker-registry.default.svc:5000/paymentapp-dev/sinatra:latest ...
+Pushed 0/6 layers, 2% complete
+Pushed 1/6 layers, 21% complete
+Pushed 2/6 layers, 41% complete
+Pushed 3/6 layers, 55% complete
+Pushed 4/6 layers, 72% complete
+Pushed 5/6 layers, 100% complete
+Pushed 6/6 layers, 100% complete
+Push successful
+Running `bundle clean   --verbose` with bundler 1.13.7
+Found no changes, using resolution from the lockfile
+Pushing image docker-registry.default.svc:5000/paymentapp-dev/sinatra:latest ...
+....
+----
++
+The image is placed in the paymentapp-dev path in the registry.
+
+. Once the application is finished building, examine the tags:
++
+[source,bash]
+----
+oc describe imagestream sinatra -n paymentapp-dev
+----
+
+* Expect the output to be similar to the following:
++
+[source,bash]
+----
+Name:                   sinatra
+Namespace:              paymentapp-dev
+Created:                3 minutes ago
+Labels:                 app=sinatra
+Annotations:            openshift.io/generated-by=OpenShiftNewApp
+Docker Pull Spec:       docker-registry.default.svc:5000/paymentapp-dev/sinatra
+Image Lookup:           local=false
+Unique Images:          1
+Tags:                   1
+
+latest
+  no spec tag
+
+  * docker-registry.default.svc:5000/paymentapp-dev/sinatra@sha256:0c626b091920b3a98777ad8fe0f73665a1d2b0117a4c448ab7ce06b493f84168
+      43 seconds ago
+----
+. Tag the `latest` image as `test`:
++
+[source,bash]
+----
+oc tag sinatra:latest sinatra:test
+----
+
+* Expect the output to be similar to this example:
++
+[source,bash]
+----
+Tag sinatra:test set to sinatra@sha256:0c626b091920b3a98777ad8fe0f73665a1d2b0117a4c448ab7ce06b493f84168.
+----
+
+* You will use the "test" `tag` to deploy in the test project in the next section this lab.
+
+. Try to deploy the image in the "paymentapp-test" project: (This command is expected to fail do to lack of permissions)
+.. Use `oc new-app` to deploy the `paymentapp-dev` project's `sinatra` image with
+ the `test` tag:
++
+[source,bash]
+----
+oc new-app paymentapp-dev/sinatra:test -n paymentapp-test
+----
+
+.. See that the deployment failed due to
++
+[source,bash]
+----
+oc get pods -n paymentapp-test
+----
+
+* Expect output similar to this:
++
+[source,bash]
+----
+NAME               READY     STATUS         RESTARTS   AGE
+sinatra-1-deploy   1/1       Running        0          1m
+sinatra-1-dfwhb    0/1       ErrImagePull   0          1m
+----
+
+. Switch back to "system:admin" and grant image pull rights to the service
+ accounts in the `paymentapp-prod` and `paymentapp-test` projects on the
+  `paymentapp-dev` project:
++
+[source,bash]
+----
+oc login -u system:admin
+oc policy add-role-to-group system:image-puller system:serviceaccounts:paymentapp-prod -n paymentapp-dev
+oc policy add-role-to-group system:image-puller system:serviceaccounts:paymentapp-test -n paymentapp-dev
+----
+
+. Assign the `registry-viewer` role to the `ocp-production` group so that the
+ production administrators can view the image streams:
++
+[source,bash]
+----
+oc policy add-role-to-group registry-viewer ocp-production -n  paymentapp-dev
+oc policy add-role-to-group registry-viewer ocp-production -n  paymentapp-test
+----
+
+. As "Marina", Restart the `build` for the "sinatra" app in the "paymentapp-test" project
++
+----
+oc login -u marina
+oc rollout latest dc/sinatra -n paymentapp-test
+----
+
+. Check that the deployment was successful after changing the credentials of the `Service Account`:
++
+----
+oc get pods -n paymentapp-test
+----
+
+. If the deployment is successful, imagine that you tested the application, then tag the
+image as `sinatra:prod` and deploy it to the `paymentapp-prod` project.
++
+[source,bash]
+----
+oc tag sinatra:test sinatra:prod -n paymentapp-dev
+----
++
+Output
++
+[source,bash]
+----
+Tag sinatra:prod set to sinatra@sha256:0c626b091920b3a98777ad8fe0f73665a1d2b0117a4c448ab7ce06b493f84168.
+----
++
+. As "Karla", Deploy the "prod" tag image in the "paymentapp-prod" project:
++
+[source,bash]
+----
+oc login -u karla -p 'r3dh4t1!'
+oc new-app paymentapp-dev/sinatra:prod -n paymentapp-prod
+----
+
+====  Allow Production Administrators to Run Unsafe Containers
+
+
+In this section, you allow one of the projects to create and deploy an S2I-built
+ image with `root` permissions--in other words, to run privileged containers.
+
+Users generally do not create pods directly. They create a deployment
+ configuration or a replication controller to launch the pods. Therefore, it is
+  the `serviceaccount` in the project that needs the permissions.
+
+OpenShift comes with a number of security context constraints (SCCs), and the
+ `anyuid` SCC does what you want--it allows you to run containers as any UID,
+  specifically `root`. Since only production administrators have access to the
+   production projects, you can simply allow the service accounts for the
+    production projects to run containers as any UID.
+
+===== Create a privileged image that runs as "root"
+
+In this step, you use SCCs to allow service accounts in the
+ `mygitlab-prod` project to run images/containers running with the `root` user.
+
+First we will try to deploy Gitlab-ce and see how it fails when it can't run as
+ "root" in the container. After that, we'll provide the permission to run image
+  and deploy again.
+
+
+. Log in as `andrew` and create a new project `mygitlab` project:
++
+[source,bash]
+----
+oc login -u andrew -p 'r3dh4t1!'
+oc new-project mygitlab
+----
+
+. Deploy the "gitlab-ce" from docker hub:
++
+[source,bash]
+----
+oc new-app gitlab/gitlab-ce
+----
++
+NOTE: This might take a few minute to pull down the image
+
+. The deployed pod should quickly fail, check the logs and note that OpenShift
+ did not let the container run the "root" user
++
+----
+oc logs -f gitlab-ce-1-tsxfh # Your pod name will differ
+----
+
+* Expect output similar to this:
++
+----
+Thank you for using GitLab Docker Image!
+Current version: gitlab-ce=10.3.3-ce.0
+Configure GitLab for your system by editing /etc/gitlab/gitlab.rb file
+And restart this container to reload settings.
+To do it use docker exec:
+  docker exec -it gitlab vim /etc/gitlab/gitlab.rb
+  docker restart gitlab
+For a comprehensive list of configuration options please see the Omnibus GitLab readme
+https://gitlab.com/gitlab-org/omnibus-gitlab/blob/master/README.md
+If this container fails to start due to permission problems try to fix it by executing:
+  docker exec -it gitlab update-permissions
+  docker restart gitlab
+Installing gitlab.rb config...
+Generating ssh_host_rsa_key...
+No user exists for uid 1000190000
+----
+
+. As "system:admin" modify the SCCs to allow `anyuid` privilege for the `service account` in the
+ "mygitlab-prod" project:
++
+[source,bash]
+----
+oc login -u system:admin
+oc adm policy add-scc-to-group anyuid system:serviceaccounts:mygitlab
+----
+
+. Now that permissions have been given to the `service account`, switch back to
+ the "andrew" user and restart the deployment and notice the changes:
++
+----
+oc login -u andrew
+oc rollout latest dc/gitlab-ce
+----
+
+
+
+. When the pod is running (this might take a couple of minutes), use `oc rsh`
+ to connect to the pod, or use the web UI, and type `whoami` to verify that you
+  are `root`:
++
+[source,bash]
+----
+oc rsh gitlab-ce-2-dbpt2
+----
+.. When inside the container, use the "whoami" command to see what user you are
+ and explore the container and use the "exit" command when finished.
+
+. After you exit from the container, you can expose the `service` as a `route` and check it out from your browser
+
+. Find out the name of the "gitlab-ce" `service`
++
+----
+oc get services
+----
++
+* Expect output similar to this, notice that the service has multiple available ports.
++
+----
+NAME        CLUSTER-IP       EXTERNAL-IP   PORT(S)                 AGE
+gitlab-ce   172.30.112.148   <none>        22/TCP,80/TCP,443/TCP   14m
+----
+
+
+. Expose port "80" of the gitlab `service` as a `route`:
++
+----
+oc expose service gitlab-ce --port 80
+----
+
+. Check the name of the `route` that was created for the `service`
++
+----
+oc get route
+----
+
+* Expect output similar to this:
++
+----
+NAME        HOST/PORT                                          PATH      SERVICES    PORT      TERMINATION   WILDCARD
+gitlab-ce   gitlab-ce-mygitlab.apps.9bf4.example.opentlc.com             gitlab-ce   80                      None
+----
+
+. Using your local browser, try to reach your application at: link:http://gitlab-ce-mygitlab.apps.GUID.example.opentlc.com[http://gitlab-ce-mygitlab.apps.GUID.example.opentlc.com]
+
+. Delete the project
+
+====  Disable Project Self-Provisioning
+
+In this exercise, you remove the user's default permission to create their own
+ projects and allow only production administrators to create projects.
+
+* Make sure that users cannot create projects.
+* Allow users from the `ocp-production` group to create their own projects.
+* Users who attempt to create projects receive the following message: "Please
+ create project using the portal or Contact Mike H at mike@example.com"
+
+=== Remove Permissions
+
+. Log in as `system:admin` and set the project to `default`:
++
+[source,bash]
+----
+oc login -u system:admin
+oc project default
+----
+
+. View the "self-provisioner" `Cluster Role Binding`:
++
+----
+oc describe clusterrolebinding.rbac  self-provisioners -n default
+----
+
+* Expect output similar to the one shown below, note that the
+ "system:authenticated:oauth" and "system:authenticated" groups are listed:
++
+----
+Name:           self-provisioners
+Labels:         <none>
+Annotations:    rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind: ClusterRole
+  Name: self-provisioner
+Subjects:
+  Kind                  Name                            Namespace
+  ----                  ----                            ---------
+  ServiceAccount        management-admin                management-infra
+  Group                 system:authenticated:oauth
+  Group                 system:authenticated
+----
+
+. Disable self-provisioning for the `system:authenticated` group by editing the
+ cluster roles:
++
+[source,bash]
+----
+oc adm policy remove-cluster-role-from-group self-provisioner system:authenticated
+oc adm policy remove-cluster-role-from-group self-provisioner system:authenticated:oauth
+----
+
+. View the "self-provisioner" `Cluster Role Binding` again:
++
+----
+oc describe clusterrolebinding.rbac  self-provisioners -n default
+----
+
+. Expect output similar to the one shown below, note that the
+ "system:authenticated:oauth" and "system:authenticated" groups are *removed*:
++
+----
+Name:           self-provisioners
+Labels:         <none>
+Annotations:    rbac.authorization.kubernetes.io/autoupdate=true
+Role:
+  Kind: ClusterRole
+  Name: self-provisioner
+Subjects:
+  Kind                  Name                    Namespace
+  ----                  ----                    ---------
+  ServiceAccount        management-admin        management-infra
+----
+
+===== Configure Project Request Message
+
+In this section, you use the installer to configure the project request message.
+ This requires rerunning the installer and takes about 10 minutes.
+
+ifeval::[{preinstalled} == true]
+. If this environment was provisioned as  a"preinstalled" environment, you can
+take the Ansible inventory file that was created to install this environment.
++
+[source,bash]
+----
+cp /var/preserve/hosts /etc/ansible/hosts
+----
+
+endif::[]
+
+. On your `bastion` server, edit your Ansible inventory file created in previous labs:
++
+[source,bash]
+----
+vi /root/my_ocp_inventory
+----
+
+. Make sure that the `[OSEv3:vars]` section contains the following:
++
+[source,text]
+----
+# Project Configuration
+osm_project_request_message='Please create project using the portal http://portal.company.internal/provision or Contact Mike at mike@example.com'
+----
+
+. On the `bastion` server, rerun the installer for only the `masters` systems:
++
+[source,bash]
+----
+ansible-playbook -f 20 -i my_ocp_inventory /usr/share/ansible/openshift-ansible/playbooks/byo/config.yml
+----
++
+[NOTE]
+This takes up to 10 minutes in the lab environment, because Ansible is limited to
+ using `-l` to perform changes on `master1.$GUID.internal` only.
+
+* Expect your results to be similar to the following:
++
+[source,bash]
+----
+PLAY RECAP *********************************************************************
+localhost                  : ok=12   changed=0    unreachable=0    failed=0
+master1.$GUID.internal     : ok=1009 changed=99   unreachable=0    failed=0
+----
++
+[NOTE]
+Ignore any error messages regarding the `localhost` host. You will also need to restart the master system service.
+
+. On the `master` host, log in as an authenticated user--not as a `system:admin`:
++
+[source,bash]
+----
+oc login -u payment1
+----
+
+. Verify that the updated project request message appears when trying
+ to create a project:
++
+[source,bash]
+----
+oc new-project thiswillnotwork
+----
+
+* Expect output similar to this:
++
+----
+Error from server: Please create project using the portal http://portal.$GUID.internal/provision or Contact
+Mike at mike@example.com
+----
+
+===== Allow Production Administrators to Create Projects
+
+In this section, you configure the platform administrator group you previously
+ created so that its members can create projects for everyone.
+
+. Log in as `system:admin` and select the `default` project:
++
+[source,bash]
+----
+oc login -u system:admin
+oc project default
+----
+
+. Use `oc adm policy` again, but this time add the cluster role of
+ `self-provisioner` to the `ocp-production` group:
++
+[source,bash]
+----
+oc adm policy add-cluster-role-to-group self-provisioner ocp-production
+----
+
+. Log in to the system as one of the `prod1` or
+  `prod2` production administrators and create a project:
++
+[source,bash]
+----
+oc login -u prod1
+----
+
+. Verify that the new project works:
++
+[source,bash]
+----
+oc new-project thiswillwork
+----
+
+* Expect the output to be similar to this example:
++
+[source,bash]
+----
+Now using project "thiswillwork" on server "https://master1.$GUID.internal:8443".
+----
+
+. Delete the project.

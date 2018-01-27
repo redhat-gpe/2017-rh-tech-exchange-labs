@@ -1,0 +1,323 @@
+:scrollbar:
+:noaudio:
+:data-uri:
+:imagesdir: images
+:toc2:
+
+
+== Application Configuration Lab Solutions
+
+The solutions here follow the general flow of the _Application Configuration Lab_, but the numbering scheme of the solutions does not match that of the lab itself.
+
+:numbered:
+
+== Use Environment Variables and ConfigMaps
+
+=== Create Project
+
+. Set up the project:
++
+[source,text]
+----
+oc new-project xyz-env
+oc new-app https://github.com/wkulhanek/PrintEnv
+oc expose svc printenv
+----
++
+[TIP]
+Make sure to replace `xyz` with your initials.
++
+. Once the application is running use `curl` to verify the current environment:
++
+[source,text]
+----
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)|jq -S
+----
+
+=== Use Environment Variables
+
+. Set and unset environment variables. After the application has redeployed verify that they have been set or deleted successfully by using `curl`.
+
+. Set up two environment variables:
++
+[source,text]
+----
+oc set env dc/printenv APP_VAR_1=Value1 APP_VAR_2=Value2
+----
+
+. Delete the second environment variable:
++
+[source,text]
+----
+oc set env dc/printenv APP_VAR_2-
+----
+
+=== Create and Update ConfigMap
+
+. Create a ConfigMap with two environment variables:
++
+[source,text]
+----
+oc create configmap printenv-config \
+    --from-literal=APP_VAR_3=Value3 \
+    --from-literal=APP_VAR_4=Value4
+----
+
+. Update the deployment configuration for PrintEnv:
++
+[source,text]
+----
+oc edit dc printenv
+----
+
+. Change the deployment configuration to contain the following:
++
+[source,yaml]
+----
+spec:
+  containers:
+  - env:
+    - name: APP_VAR_1
+      value: Value1
+    - name: APP_VAR_3
+      valueFrom:
+        configMapKeyRef:
+          name: printenv-config
+          key: APP_VAR_3
+    - name: APP_VAR_4
+      valueFrom:
+        configMapKeyRef:
+          name: printenv-config
+          key: APP_VAR_4
+----
+
+. Once the application finishes the deployment use `curl` to verify success.
+
+=== Return Environment as Text File
+
+. Set an environment variable to read from the file:
++
+[source,text]
+----
+oc set env dc/printenv READ_FROM_FILE=/data/configfile.txt
+----
+
+. Create a configuration file:
++
+[source,text]
+----
+echo "This is Wolfgang's Config File" >configfile.txt
+oc create configmap printenv-config-file --from-file=configfile.txt
+oc set volume dc/printenv --add --overwrite --name=config-volume -m /data/ -t configmap --configmap-name=printenv-config-file
+----
++
+. Use `curl` to verify that now the application is returning the contents of the text file (do not use `jq` since the output is no longer JSON)
++
+[source,text]
+----
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+----
+
+== Add Secrets
+
+=== Add Secret Through Environment Variables
+
+. Create the secret from a file:
++
+[source,text]
+----
+echo 'r3dh4t1!' > ./password.txt
+echo 'admin' > ./user.txt
+oc secret new printenv-secret app_user=user.txt app_password=password.txt
+oc describe secrets printenv-secret
+----
+
+. Validate the secret:
++
+[source,text]
+----
+oc get secret printenv-secret -o yaml
+----
+
+* This results in:
++
+[source,yaml]
+----
+apiVersion: v1
+data:
+  app_password: cjNkaDR0MSEK
+  app_user: YWRtaW4K
+kind: Secret
+[...]
+----
+
+. Decode the user ID and password using `base64 --decode`:
++
+[source,text]
+----
+echo "cjNkaDR0MSEK" | base64 --decode
+echo "YWRtaW4K" | base64 --decode
+----
+
+. Add the secret to the PrintEnv application:
++
+[source,text]
+----
+oc env dc/printenv --from=secret/printenv-secret
+----
+
+. Verify the environment variables:
++
+[source,text]
+----
+oc env dc/printenv --list
+----
+
+* Expect the output to be similar to this:
++
+[source,text]
+----
+# deploymentconfigs printenv, container printenv
+APP_VAR_1=Value1
+# APP_VAR_3 from configmap printenv-config, key APP_VAR_3
+# APP_VAR_4 from configmap printenv-config, key APP_VAR_4
+# APP_PASSWORD from secret printenv-secret, key app_password
+# APP_USER from secret printenv-secret, key app_user
+----
+
+. Set the same secrets for the MySQL database by adding the `MYSQL_` prefix:
++
+[source,text]
+----
+oc env dc/printenv --from=secret/printenv-secret --prefix=MYSQL_
+oc env dc/printenv --list
+----
+
+* Expect the output to be similar to this:
++
+[source,text]
+----
+# deploymentconfigs printenv, container printenv
+APP_VAR_1=Value1
+# APP_VAR_3 from configmap printenv-config, key APP_VAR_3
+# APP_VAR_4 from configmap printenv-config, key APP_VAR_4
+# APP_PASSWORD from secret printenv-secret, key app_password
+# APP_USER from secret printenv-secret, key app_user
+# MYSQL_APP_PASSWORD from secret printenv-secret, key app_password
+# MYSQL_APP_USER from secret printenv-secret, key app_user
+----
+
+=== Add Secret Through Volume Mount
+
+. Create a database configuration using the user ID, password, and database URL:
++
+[source,text]
+----
+echo 'r3dh4t1!' > ./dbpassword.txt
+echo 'admin' > ./dbuser.txt
+echo 'http://postgresql:5432' > ./dburl.txt
+oc secret new printenv-db-secret app_db_user=user.txt app_db_password=password.txt app_db_url=dburl.txt
+----
+
+. Mount the new database secret as a volume into the PrintEnv deployment configuration and set the `READ_FROM_FILE` variable to point to the `app_db_url` file in that volume (note that this is the name of the secret, not the original file name):
++
+[source,text]
+----
+oc set volume dc/printenv --add --overwrite --name=db-config-volume -m /dbconfig/ --secret-name=printenv-db-secret
+oc set env dc/printenv READ_FROM_FILE=/dbconfig/app_db_url
+curl $(oc get route printenv|awk '{print $2}'|grep printenv)
+----
+
+== Cleanup
+
+.Delete the `xyz-env` project to free up resources for further labs.
++
+[source,bash]
+----
+oc delete project xyz-env
+----
+
+
+
+== Use ConfigMaps with Gogs Application
+
+. Set up the project, database, and Gogs pod replacing `xyz` with your initials:
++
+[source,text]
+----
+oc new-project xyz-gogs --display-name "Shared Gogs"
+oc new-app postgresql-persistent --param POSTGRESQL_DATABASE=gogs --param POSTGRESQL_USER=gogs --param POSTGRESQL_PASSWORD=gogs --param VOLUME_CAPACITY=4Gi -lapp=postgresql_gogs
+oc new-app wkulhanek/gogs:11.4 -lapp=gogs
+----
+
+. Create a new PVC and connect it to `/data`:
++
+[source,text]
+----
+echo "apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gogs-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 4Gi" | oc create -f -
+
+oc set volume dc/gogs --add --overwrite --name=gogs-volume-1 --mount-path=/data/ --type persistentVolumeClaim --claim-name=gogs-data
+----
+
+. Expose the service as a route:
++
+[source,text]
+----
+oc expose svc gogs
+oc get route gogs
+----
+
+. Navigate to http://gogsroute.
+
+. Set up Gogs with these values:
+* Database Type: `PostgreSQL`
+* Host: `postgresql:5432`
+* User: `gogs`
+* Password: `gogs`
+* Database Name: `gogs`
+* Run User: `gogs`
+* Application URL: http://gogsroute (the `gogsroute` depends on your environment).
+
+. Click `Install Gogs`
+
+. Examine the generated `app.ini` file:
++
+[source,text]
+----
+oc exec $(oc get pod | grep "^gogs" | awk '{print $1}') -- cat /opt/gogs/custom/conf/app.ini | more
+----
++
+[NOTE]
+On Windows you will need to manually determine the pod name and pass it to the `oc exec` command.
+
+. Make the changes permanent:
++
+[source,text]
+----
+oc exec $(oc get pod | grep "^gogs" | awk '{print $1}') -- cat /opt/gogs/custom/conf/app.ini >app.ini
+----
++
+
+. Create the ConfigMap and mount it as a volume:
++
+[source,text]
+----
+oc create configmap gogs --from-file=app.ini
+oc set volume dc/gogs --add --overwrite --name=config-volume -m /opt/gogs/custom/conf/ -t configmap --configmap-name=gogs
+rm app.ini
+----
+
+. Wait until the redeployment finishes.
+. Open Gogs and register.
+. Log in to Gogs.
+
+IMPORTANT: Do not delete this project. You will use Gogs throughout this course.

@@ -1,0 +1,277 @@
+:scrollbar:
+:data-uri:
+:toc2:
+:linkattrs:
+:course_name: Red Hat OpenShift Operations
+
+
+==  Rocket.Chat Alerts Lab
+
+Rocket.Chat is an open source chat platform similar to Slack. You can easily deploy it on top of OpenShift and use it as an example of how to receive alerts from Prometheus in case things go wrong.
+
+:numbered:
+
+
+== Set Up Rocket.Chat
+
+. Log in again to the shell on your Bastion host and switch to the `root` user.
+
+. Create a new project to hold the Rocket.Chat instance:
++
+[source,bash]
+----
+oc new-project rocketchat --display-name="Rocket Chat"
+----
+
+. Deploy a persistent MongoDB database to hold the Rocket.Chat configuration:
++
+[source,bash]
+----
+oc new-app mongodb-persistent -p MONGODB_USER=rocketchat-admin -p MONGODB_PASSWORD=rocketchat -p MONGODB_DATABASE=rocketchat -p VOLUME_CAPACITY=4Gi
+----
+
+. Wait until the MongoDB pod is fully initialized.
+
+. Deploy the Rocket Chat image from Docker Hub, connecting it to the MongoDB database that you just created, and expose the Rocket Chat service as a route:
++
+[source,bash]
+----
+oc new-app docker.io/rocketchat/rocket.chat:0.59.1 -e MONGO_URL=mongodb://rocketchat-admin:rocketchat@mongodb:27017/rocketchat
+oc expose svc rocketchat
+----
+
+. Monitor your pods and wait until Rocket Chat fully starts.
+* Tail the pod logs to make sure it starts successfully.
+
+. Open a `rsh` session into your MongoDB pod:
++
+[source,bash]
+----
+oc rsh <mongodb_pod>
+----
++
+[TIP]
+Use `oc get pod` to find the specific name of your MondoDB pod--expect it to be similar to `mongodb-1-mgvb2`.
+
+. Once inside your MongoDB pod, connect to the database:
++
+[source,bash]
+----
+mongo localhost:27017
+----
+
+. Enter the following commands one by one:
++
+[source,bash]
+----
+use rocketchat
+db.auth('rocketchat-admin','rocketchat')
+db.rocketchat_settings.update({_id:'Accounts_UseDNSDomainCheck'},{$set:{value:false}})
+exit
+----
+* Rocket.Chat uses a domain check code to verify the validity of the email
+ address. Because you do not have any email providers available in the lab, you
+  disable this check.
+
+. Type `exit` and then press `Enter` to disconnect from your MondoDB pod.
+
+
+== Configure Rocket.Chat
+
+=== Connect to Rocket.Chat and Register Account
+
+In this section, you connect to Rocket.Chat and register a new account.
+
+. Determine the URL of your Rocket.Chat instance:
++
+[source,bash]
+----
+oc get route rocketchat
+----
+
+. In a web browser, navigate to the Rocket.Chat URL.
+
+. Under the blue *Login* button, select *Register a new account*.
+
+. Enter your details (Name, e-mail address and pick a password).
+
+. Click *Register A New Account*.
+
+. On the warning dialog, click *Yes*.
+
+. When prompted to register the username, update the suggestion or keep the default, and click *Use this username*.
+
+
+=== Create Channel in Rocket.Chat
+
+In this section, you create a channel in Rocket.Chat so that Alertmanager has a destination for sending alerts.
+
+. Next to the *Search* box under your name click *+*.
+
+. Use `openshift-alerts` as the channel name and click *Create*.
+
+=== Create Inbound Webhook
+
+In this section, you create the inbound webhook for the new channel to receive alerts from Alertmanager.
+
+. Next to your username, click the three dots and select *Administration*.
+
+. Select *Integrations*, then *New Integration*, and then *Incoming WebHook*.
+
+. Enter or select the following values:
+* *Enabled*: `True`
+* *Name*: `OpenShift Alerts`
+* *Post to Channel*: `#openshift-alerts`
+* *Post as*: `rocket.cat`
+* *Alias*: `Prometheus`
+* *Script Enabled*: `True`
+
+. Copy and paste the script below into the `Script` box:
++
+[source,javascript]
+----
+class Script {
+  process_incoming_request({
+    request
+  }) {
+    var alertColor = "warning";
+    var alertKind  = "UNDEFINED";
+
+    if (request.content.status == "resolved") {
+      alertColor = "good";
+      alertKind  = "RESOLVED"
+    } else if (request.content.status == "firing") {
+      alertColor = "danger";
+      alertKind  = "PROBLEM"
+    }
+    console.log(request.content);
+
+    let finFields = [];
+    for (i = 0; i < request.content.alerts.length; i++) {
+      var endVal = request.content.alerts[i];
+      var elem = {
+        title: alertKind + ": " + endVal.labels.alertname,
+        value: "Instance: " + endVal.labels.instance + "; " + "Description: " + endVal.annotations.description + "; " + "Summary: " + endVal.annotations.summary,
+        short: false
+      };
+
+      finFields.push(elem);
+    }
+    return {
+      content: {
+        username: "Alertmanager",
+        attachments: [{
+          color: alertColor,
+          title_link: request.content.externalURL,
+          title: "Prometheus notification",
+          fields: finFields,
+        }]
+      }
+    };
+
+    return {
+      error: {
+        success: false,
+        message: 'Error accepting Web Hook'
+      }
+    };
+  }
+}
+----
++
+. Click *Save Changes*.
+
+. Copy the webhook URL--you need it later to configure Alertmanager.
+* This field appears only after clicking *Save Changes*.
+
+
+. Next to *Administration*, click the *x* and return to the chat window.
+
+. From a shell prompt, test that your webhook is working by sending an example JSON payload to Rocket.Chat, replacing `<WEBHOOK_URL>` with the URL you copied down earlier:
++
+[source,bash]
+----
+curl -X POST -H 'Content-Type: application/json' --data '{"alerts": [{"status": "testing", "labels": {"alertname": "alert_test", "instance": "instance.my.test.cluster" },   "annotations": { "description": "Alert Test Description",      "summary": "Alert Test Summary" } }]}' <WEBHOOK_URL>
+----
+* Expect to receive an alert message in your Rocket.Chat channel.
+
+
+== Install Alertmanager
+
+Now that you have a target to receive your alerts, you configure Alertmanager to send alerts when things go wrong.
+
+. On your Bastion host, change to the directory with the Alertmanager code and switch projects to the `prometheus` OpenShift project:
++
+[source,bash]
+----
+cd /root/openshift-prometheus/alertmanager
+oc project prometheus
+----
+
+. Create Alertmanager, replacing `<WEBHOOK_URL>` with the previously copied webhook URL:
++
+[source,bash]
+----
+oc new-app -f alertmanager.yaml -p VOLUME_CAPACITY=4Gi -p WEBHOOK_URL=<WEBHOOK_URL>
+----
+
+. You can see the configuration of Alertmanager by examining the configuration map created by the template:
++
+[source,bash]
+----
+oc get cm alertmanager -o yaml
+----
+
+. Examine the end of the file to see the section that configures Alertmanager to send the alert to a webhook:
++
+[source,yaml]
+----
+receivers:
+- name: 'webhook'
+  webhook_configs:
+  - send_resolved: true
+    url: '<WEBHOOK_URL'
+----
++
+[TIP]
+If you want to use other notification mechanisms such as email, PagerDuty, or Slack, you update the configuration map with the correct configuration, as documented in link:https://prometheus.io/docs/alerting/configuration["https://prometheus.io/docs/alerting/configuration^"]).
+
+
+== Test Alerting
+
+In this section, you test the alerting to make sure it works.
+
+. From your Bastion host, remotely connect using SSH into one of the nodes.
+
+. Shut down the `atomic-openshift-node` service:
++
+[source,bash]
+----
+systemctl stop atomic-openshift-node
+----
++
+[NOTE]
+You may want to make sure that this node is not running either Alertmanager or the Prometheus pod. You can use `oc get pod -n project -o wide` to display which pods run on which nodes. Your best bet probably is to shut down an infranode rather than a worker node, because the Rocket.Chat and Prometheus pods are usually distributed to regular nodes.
+
+* After a minute or two, expect to see an alert with a red bar and some descriptive text in the Rocket.Chat window.
+
+* You can also see the alert in both the Prometheus and Alertmanager user interfaces.
+
+. Bring the node back online:
++
+[source,bash]
+----
+systemctl start atomic-openshift-node
+----
+* A few minutes later, expect to see a second notification with the same text, but with a green bar indicating that the situation is resolved.
+
+
+== Clean Up
+
+. If you want to remove your monitoring environment, delete the `prometheus` OpenShift project and the `prometheus-cluster-reader` cluster role-binding:
++
+[source,bash]
+----
+oc delete project prometheus
+oc delete clusterrolebinding prometheus-cluster-reader
+----
