@@ -24,6 +24,252 @@ Finally, you make the Intermediate CA certificate available to your client tools
 
 :numbered:
 
+
+
+==== Preliminary Important Notes
+
+. *Performance*: The lab environment is cloudased, so you can access it over
+ the WAN from anywhere. However, do not expect its performance to match a
+  bare-metal environment.
+
+. *Remote Access*: The bastion host is the only host that you can access with
+ SSH outside the lab environment. External SSH for all other hosts is blocked.
+  From the bastion host, you can access the other hosts internally through SSH.
+   As described earlier, you must access the system (not as `root`) with your
+    private SSH key and OPENTLC login.
+
+. *GUID*: Each lab environment is assigned a global unique identifier (GUID)
+ with four characters, which you receive by email when provisioning your lab
+  environment. *From this point on, replace _GUID_ with your lab's four-character GUID.*
+
+. *Bastion host* is *not* an OpenShift cluster member or part of the OpenShift
+ environment. The bastion host mimics your client's infrastructure or your
+  laptop or desktop that is connected to the client's local area network (LAN).
++
+[TIP]
+It is recommended to use a terminal multiplexing tool, such as
+ *tmux* or *screen*, which keeps your place in the session if you are
+  disconnected from your environment. You can install their packages after
+   setting up the `rhel` repositories `yum install tmux`.
+If you use tmux, type *Ctrl+B* (to enter "scroll mode") + page up or down to
+ scroll, and use the *Esc* key to exit scroll mode.
+You can detach from tmux : `Ctrl+B  D` or simply close you terminal. To attach
+ again an existing tmux session, run the command `tmux attach` once you're
+  connected to the bastion host.
++
+. Provisioned Environment Hosts
+
+These are the hosts that have been deployed in your lab environment:
+
+* Bastion (administration) server: `bastion.GUID.example.opentlc.com`, `bastion.GUID.internal`
+* NFS server: `support1.GUID.example.opentlc.com`, `support1.GUID.internal`
+* Load balancer: `loadbalancer.GUID.example.opentlc.com`, `loadbalancer1.GUID.internal`
+* 3 OpenShift master nodes: `master{1,2,3}.GUID.example.opentlc.com`, `master{1,2,3}.GUID.internal`
+* 2 OpenShift infrastructure nodes: `infranode{1,2}.GUID.example.opentlc.com`, `infranode{1,2}.GUID.internal`
+* 1 OpenShift worker node: `node1.GUID.example.opentlc.com`, `node1.GUID.internal`
+* IPA Server: `ipa.shared.example.opentlc.com` (shared resource for all students)
+
+==== Connect to Bastion Host and Explore your environment
+
+When you connect to `bastion.GUID.example.opentlc.com` for the first time, you
+will have to accept the server SSH fingerprint. Reply 'yes': it will be added
+ to your `known_hosts` and not asked next time you connect.
+
+. Connect to your administration host `bastion.GUID.example.opentlc.com`. Note that your private key location may vary.
++
+[source,bash]
+----
+yourdesktop$ ssh -i ~/.ssh/studentkey ec2-user@bastion.GUID.example.opentlc.com
+----
++
+* Example of a successful connection:
++
+[source,bash]
+----
+[gucore@work ~]$ ssh -i ~/.ssh/studentkey ec2-user@bastion.9e91.example.opentlc.com
+----
++
+[source,text]
+----
+The authenticity of host 'bastion.9e91.example.opentlc.com (31.220.66.121)' can't be established.
+ECDSA key fingerprint is SHA256:fR4vFVswyvpj/Jevfin3+X0Fkehbfx4HBjw46AeIS14.
+ECDSA key fingerprint is MD5:bb:25:92:ee:c9:ba:23:71:b7:c1:f7:2d:89:6d:b0:66.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'bastion.9e91.example.opentlc.com,31.220.66.121' (ECDSA) to the list of known hosts.
+Creating home directory for ec2-user.
+[ec2-userbastion.9e91 ~]$
+----
+
+. Run `sudo -i` to become the `root` user on the bastion host:
++
+[source,bash]
+----
+sudo -i
+----
++
+. Ensure that you have a GUID environment variable set to make entering commands
+easier
++
+[source,bash]
+----
+echo ${GUID}
+----
++
+The output should be your GUID.
++
+If the output is NOT your GUID, execute the following to set your unique identifier as the GUID environment variable:
++
+[source,bash]
+----
+export GUID=$(hostname | cut -d. -f2)
+----
++
+Validate that it is set, and add it to your profile.
++
+[source,bash]
+----
+echo ${GUID}; echo "export GUID=${GUID}" >> /root/.bashrc
+----
+
+
+. A sample Ansible inventory file with host in your environment has been created
+ for you, have a look at `/etc/ansible/hosts`
++
+[source,bash]
+----
+cat /etc/ansible/hosts
+----
++
+. Use the Ansible `--list-hosts` command line to list the masters, nodes, and
+ all of the host groups:
++
+.. List the "masters" host group:
++
+[source,bash]
+----
+ansible masters --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+  hosts (3):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+----
++
+.. List the "nodes" host group (Remember, Masters are Nodes too):
++
+[source,bash]
+----
+ansible nodes --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,bash]
+----
+hosts (8):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+    infranode1.GUID.internal
+    infranode2.GUID.internal
+    node1.GUID.internal
+    node2.GUID.internal
+----
++
+.. List the "all" host group:
++
+[source,bash]
+----
+ansible all --list-hosts
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+hosts (10):
+    master1.GUID.internal
+    master2.GUID.internal
+    master3.GUID.internal
+    infranode1.GUID.internal
+    infranode2.GUID.internal
+    node1.GUID.internal
+    node2.GUID.internal
+    loadbalancer1.GUID.internal
+    support1.GUID.internal
+----
++
+. Test the Ansible configuration by using the Ansible "ping" module to contact all
+the hosts.  This also ensures that all the hosts are running.:
++
+[source,bash]
+----
+ansible all -m ping
+----
++
+Expect the output to look similar to this:
++
+[source,text]
+----
+loadbalancer1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+infranode1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master3.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+master1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+infranode2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node2.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+support1.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+node3.GUID.internal | SUCCESS => {
+    "changed": false,
+    "failed": false,
+    "ping": "pong"
+}
+----
+
+
+
 === Prepare Environment
 
 . Log in to your OpenShift Bastion host and switch to the `root` user.

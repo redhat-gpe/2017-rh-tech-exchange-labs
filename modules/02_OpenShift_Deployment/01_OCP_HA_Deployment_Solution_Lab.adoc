@@ -47,21 +47,6 @@ Read these notes. They help you successfully navigate the lab.
 
 == Lab: {labname}
 
-=== Set Up Lab Environment
-
-If you have not done so yet, provision the environment required to complete the
- labs in the _{course_name}_ training.
-
-. Navigate to the {opencf}.
-
-. Log in to the portal using your OPENTLC credentials and select the
- *{catalog_item_name}* to provision your environment.
-
-[TIP]
-If you need additional information, use the lab instructions in the first module
- of this course.
-
-
 ==== Preliminary Important Notes
 
 . *Performance*: The lab environment is cloudased, so you can access it over
@@ -115,14 +100,14 @@ will have to accept the server SSH fingerprint. Reply 'yes': it will be added
 +
 [source,bash]
 ----
-yourdesktop$ ssh -i ~/.ssh/id_rsa your-opentlc-login@bastion.GUID.example.opentlc.com
+yourdesktop$ ssh -i ~/.ssh/studentkey ec2-user@bastion.GUID.example.opentlc.com
 ----
 +
 * Example of a successful connection:
 +
 [source,bash]
 ----
-[gucore@work ~]$ ssh gucore-redhat.com@bastion.9e91.example.opentlc.com
+[gucore@work ~]$ ssh -i ~/.ssh/studentkey ec2-user@bastion.9e91.example.opentlc.com
 ----
 +
 [source,text]
@@ -132,8 +117,8 @@ ECDSA key fingerprint is SHA256:fR4vFVswyvpj/Jevfin3+X0Fkehbfx4HBjw46AeIS14.
 ECDSA key fingerprint is MD5:bb:25:92:ee:c9:ba:23:71:b7:c1:f7:2d:89:6d:b0:66.
 Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added 'bastion.9e91.example.opentlc.com,31.220.66.121' (ECDSA) to the list of known hosts.
-Creating home directory for gucore-redhat.com.
-[gucore-redhat.com@bastion.9e91 ~]$
+Creating home directory for ec2-user.
+[ec2-userbastion.9e91 ~]$
 ----
 
 . Run `sudo -i` to become the `root` user on the bastion host:
